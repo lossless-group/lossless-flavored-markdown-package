@@ -53,8 +53,7 @@
   "author": "Michael Staton <michael@lossless.group>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lossless-group/astro-knots",
-    "directory": "packages/lfm"
+    "url": "https://github.com/lossless-group/lossless-flavored-markdown-package"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
