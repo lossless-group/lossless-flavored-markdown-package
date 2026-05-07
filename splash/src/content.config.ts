@@ -153,7 +153,10 @@ const changelogSchema = z
     status: lenientString,
     at_semantic_version: lenientString,
     semantic_version: lenientString,
-    augmented_with: lenientString,
+    // Per changelog-conventions: augmented_with is a list ("same ul-list
+    // preference as authors"). Legacy entries sometimes use a bare string;
+    // lenientStringArray coerces both forms.
+    augmented_with: lenientStringArray,
     publish: lenientBoolean,
     usage_index: lenientNumber,
 
@@ -198,7 +201,7 @@ const contextVSchema = z
     status: lenientString,
     at_semantic_version: lenientString,
     semantic_version: lenientString,
-    augmented_with: lenientString,
+    augmented_with: lenientStringArray,
     publish: lenientBoolean,
     applies_to: lenientString,
 
@@ -227,7 +230,7 @@ const featureHighlights = defineCollection({
     .passthrough(),
 });
 
-const sctExampleSchema = z
+const stcExampleSchema = z
   .object({
     title: lenientString,
     order: lenientNumber,
@@ -246,9 +249,9 @@ const sctExampleSchema = z
   })
   .passthrough();
 
-const sctExamples = defineCollection({
-  loader: glob({ pattern: '*.md', base: './src/content/sct-examples' }),
-  schema: sctExampleSchema,
+const stcExamples = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/stc-examples' }),
+  schema: stcExampleSchema,
 });
 
 // ─── Long-form collections (point at parent dirs) ─────────────────────────
@@ -273,7 +276,7 @@ const contextV = defineCollection({
 
 export const collections = {
   'feature-highlights': featureHighlights,
-  'sct-examples': sctExamples,
+  'stc-examples': stcExamples,
   changelog,
   'context-v': contextV,
 };

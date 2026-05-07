@@ -6,6 +6,46 @@ A polyglot markdown pipeline where user-configured *syntax-triggers* normalize m
 
 One package, one import. Bundles unified, remark-parse, remark-gfm, remark-directive, and the LFM custom plugins.
 
+**Live splash · feature gallery · changelog ·** [`lossless-group.github.io/lossless-flavored-markdown-package`](https://lossless-group.github.io/lossless-flavored-markdown-package/)
+
+## The STC paradigm
+
+LFM's whole pitch in three stages. Authors keep authoring in whatever syntax their tool prefers; a `remark` plugin matches the pattern (the *trigger*); the parser emits one canonical AST node a renderer dispatches to.
+
+```mermaid
+flowchart LR
+    subgraph SYN["01 · Syntax — author"]
+        S1[":::callout{type=warning}"]
+        S2["&gt; [!warning] Title"]
+        S3["bare youtu.be/{id}"]
+        S4["[^a1b2c3]"]
+    end
+
+    subgraph TRG["02 · Trigger — LFM ships"]
+        T1["remark-callouts"]
+        T2["remark-link-preview"]
+        T3["remark-citations"]
+    end
+
+    subgraph CMP["03 · Component — your renderer"]
+        C1["one MDAST callout node"]
+        C2["one MDAST link-preview node"]
+        C3["one MDAST citation node"]
+    end
+
+    S1 --> T1
+    S2 --> T1
+    S3 --> T2
+    S4 --> T3
+    T1 --> C1
+    T2 --> C2
+    T3 --> C3
+```
+
+The polyglot point: **the two arrows landing on `remark-callouts`.** A directive callout and an Obsidian callout block produce the *same* MDAST node, so your `<Callout>` component renders one shape regardless of which authoring tool wrote the file. Adding a new authoring syntax means a new normalizer plugin — no consumer changes, no renderer rewrites.
+
+This package owns stages 01 + 02 (and the matching catalog at stage 01). The component renderer is yours.
+
 ## When to reach for LFM
 
 - You want MDX-class richness (callouts, citations, embeds, custom components) but **don't want JSX in your markdown**.
@@ -93,15 +133,7 @@ import { remarkCallouts } from '@lossless-group/lfm';
 
 The `remarkLfm` preset chains the first four together. All features enabled by default. `remarkOgFetcher` is opt-in (`enabled: true`) because it makes network calls; see **OG fetching** below.
 
-**The polyglot point:** `:::callout{type="warning"}`, `> [!warning]`, and (eventually) Markdoc `{% callout %}` all produce **the same MDAST node shape**. Authors pick the syntax their tool prefers; downstream renderers see one canonical form. Adding a new authoring syntax means a new normalizer plugin — no consumer changes needed.
-
-```
-.md source ──> tokenize ──> trigger match ──> normalize ──> renderer
-              (remark)     (your config +     (one MDAST    (your framework's
-                            our defaults)      shape)        components)
-```
-
-This package owns the first three stages. The renderer is yours.
+The plugins above are the **triggers** in [the STC paradigm](#the-stc-paradigm) — each one matches its own family of authoring syntaxes and normalizes them into one canonical MDAST shape. Adding a syntax is adding a normalizer plugin; consumers don't change.
 
 ## Options
 
@@ -230,7 +262,14 @@ See the full spec: [Codifying a Comprehensive Extended Markdown Flavor and Share
 
 ## What shipped when
 
-See [`changelog/`](./changelog/) for entry-by-entry notes following the [Lossless changelog conventions](https://github.com/lossless-group/lossless-skills/tree/main/changelog-conventions).
+See [`changelog/`](./changelog/) for entry-by-entry notes following the [Lossless changelog conventions](https://github.com/lossless-group/lossless-skills/tree/main/changelog-conventions). The same entries render on the [live splash](https://lossless-group.github.io/lossless-flavored-markdown-package/changelog/) with full-text search, tags, and date sorting.
+
+## See also
+
+- **Live splash** — [`lossless-group.github.io/lossless-flavored-markdown-package`](https://lossless-group.github.io/lossless-flavored-markdown-package/) · the package's own GitHub Pages presence: STC diagram, feature gallery, changelog, context-v notes, full-text search
+- **Design system** — [`splash/DESIGN.md`](./splash/DESIGN.md) · token inventory + Ideogram creative brief for OG image generation, formatted to the [Google `@google/design.md`](https://github.com/google-labs-code/design.md) spec
+- **Spec** — [Codifying a Comprehensive Extended Markdown Flavor and Shared Package](https://github.com/lossless-group/astro-knots/blob/master/context-v/specs/Codifying-a-Comprehensive-Extended-Markdown-Flavor-and-Shared-Package.md) · the full specification this package implements
+- **Sister scaffold** — `@lossless-group/lfm-astro` (forthcoming) · components and integration glue for Astro consumers
 
 ## License
 

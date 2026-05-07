@@ -2,8 +2,8 @@
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
-  /** The featured SCT example to display in the worked panel. */
-  example?: CollectionEntry<'sct-examples'>;
+  /** The featured STC example to display in the worked panel. */
+  example?: CollectionEntry<'stc-examples'>;
 }
 
 const { example } = Astro.props;
@@ -31,23 +31,23 @@ const examples: Array<{ kind?: string; code?: string }> =
   Array.isArray(ex?.syntax_examples) ? (ex!.syntax_examples as any[]) : [];
 ---
 
-<section class="sct" aria-labelledby="sct-heading">
-  <header class="sct__header">
-    <p class="folio" data-num="§">SCT — Syntax · Component · Trigger</p>
-    <h2 id="sct-heading">
+<section class="stc" aria-labelledby="stc-heading">
+  <header class="stc__header">
+    <p class="folio" data-num="§">STC — Syntax · Trigger · Component</p>
+    <h2 id="stc-heading">
       Three steps from <em>your markdown</em> to <em>your renderer</em>.
     </h2>
   </header>
 
-  <ol class="sct__stages">
+  <ol class="stc__stages">
     {
       stages.map((s, idx) => (
-        <li class="sct__stage" style={`--i:${idx}`}>
-          <span class="sct__num mono">{s.num}</span>
-          <h3 class="sct__label">{s.label}</h3>
-          <p class="sct__body">{s.body}</p>
+        <li class="stc__stage" style={`--i:${idx}`}>
+          <span class="stc__num mono">{s.num}</span>
+          <h3 class="stc__label">{s.label}</h3>
+          <p class="stc__body">{s.body}</p>
           {idx < stages.length - 1 && (
-            <span class="sct__arrow" aria-hidden="true">
+            <span class="stc__arrow" aria-hidden="true">
               <svg viewBox="0 0 24 12" width="32" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
                 <path d="M0 6 H22" />
                 <path d="M16 1 L22 6 L16 11" />
@@ -61,23 +61,23 @@ const examples: Array<{ kind?: string; code?: string }> =
 
   {
     ex && (
-      <div class="sct__example">
-        <header class="sct__example-header">
+      <div class="stc__example">
+        <header class="stc__example-header">
           <p class="folio" data-num="¶">Live example</p>
           <h3>{ex.title}</h3>
           {ex.status && <span class="pill" data-status={ex.status}>{ex.status}</span>}
         </header>
 
-        <dl class="sct__rows">
+        <dl class="stc__rows">
           {examples.length > 0 && (
-            <div class="sct__row">
+            <div class="stc__row">
               <dt>Syntax</dt>
               <dd>
-                {ex.syntax_label && <p class="sct__row-label">{ex.syntax_label}</p>}
-                <ul class="sct__syntaxes">
+                {ex.syntax_label && <p class="stc__row-label">{ex.syntax_label}</p>}
+                <ul class="stc__syntaxes">
                   {examples.map((it) => (
                     <li>
-                      {it.kind && <span class="sct__syntax-kind">{it.kind}</span>}
+                      {it.kind && <span class="stc__syntax-kind">{it.kind}</span>}
                       <code>{it.code}</code>
                     </li>
                   ))}
@@ -87,14 +87,14 @@ const examples: Array<{ kind?: string; code?: string }> =
           )}
 
           {ex.parse_file && (
-            <div class="sct__row">
+            <div class="stc__row">
               <dt>Parse</dt>
               <dd><span class="chip">{ex.parse_file}</span></dd>
             </div>
           )}
 
           {ex.component_file && (
-            <div class="sct__row">
+            <div class="stc__row">
               <dt>Component</dt>
               <dd><span class="chip">{ex.component_file}</span></dd>
             </div>
@@ -106,7 +106,7 @@ const examples: Array<{ kind?: string; code?: string }> =
 </section>
 
 <style>
-  .sct {
+  .stc {
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
@@ -119,39 +119,39 @@ const examples: Array<{ kind?: string; code?: string }> =
     position: relative;
   }
   /* The corner ticks — printer's marks. */
-  .sct::before,
-  .sct::after {
+  .stc::before,
+  .stc::after {
     content: '';
     position: absolute;
     width: 14px;
     height: 14px;
     border: 1px solid var(--color-border-strong);
   }
-  .sct::before {
+  .stc::before {
     top: -1px;
     left: -1px;
     border-right: 0;
     border-bottom: 0;
   }
-  .sct::after {
+  .stc::after {
     bottom: -1px;
     right: -1px;
     border-left: 0;
     border-top: 0;
   }
 
-  .sct__header h2 {
+  .stc__header h2 {
     font-size: clamp(1.4rem, 2.6vw, 1.85rem);
     margin-top: var(--space-2);
     color: var(--color-text);
   }
-  .sct__header h2 em {
+  .stc__header h2 em {
     font-style: italic;
     color: var(--color-accent);
     font-weight: 500;
   }
 
-  .sct__stages {
+  .stc__stages {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-5);
@@ -160,10 +160,10 @@ const examples: Array<{ kind?: string; code?: string }> =
     margin: 0;
   }
   @media (max-width: 720px) {
-    .sct__stages { grid-template-columns: 1fr; }
+    .stc__stages { grid-template-columns: 1fr; }
   }
 
-  .sct__stage {
+  .stc__stage {
     position: relative;
     padding: var(--space-5);
     border: 1px solid var(--color-border);
@@ -173,7 +173,7 @@ const examples: Array<{ kind?: string; code?: string }> =
     flex-direction: column;
     gap: var(--space-2);
   }
-  .sct__stage::before {
+  .stc__stage::before {
     content: '';
     position: absolute;
     top: 0;
@@ -183,13 +183,13 @@ const examples: Array<{ kind?: string; code?: string }> =
     background: var(--color-accent);
   }
 
-  .sct__num {
+  .stc__num {
     font-size: 0.78rem;
     letter-spacing: 0.16em;
     color: var(--color-accent);
     font-weight: 600;
   }
-  .sct__label {
+  .stc__label {
     font-family: var(--font__display);
     font-size: 1.18rem;
     color: var(--color-text);
@@ -197,14 +197,14 @@ const examples: Array<{ kind?: string; code?: string }> =
     font-weight: 600;
     font-variation-settings: 'opsz' 24;
   }
-  .sct__body {
+  .stc__body {
     color: var(--color-text-soft);
     font-size: 0.94rem;
     line-height: 1.55;
     margin: 0;
   }
 
-  .sct__arrow {
+  .stc__arrow {
     position: absolute;
     top: 50%;
     right: calc(var(--space-5) * -0.85);
@@ -215,7 +215,7 @@ const examples: Array<{ kind?: string; code?: string }> =
     z-index: 2;
   }
   @media (max-width: 720px) {
-    .sct__arrow {
+    .stc__arrow {
       top: auto;
       bottom: calc(var(--space-5) * -0.85);
       right: 50%;
@@ -224,32 +224,32 @@ const examples: Array<{ kind?: string; code?: string }> =
   }
 
   /* ─── Worked example panel ─── */
-  .sct__example {
+  .stc__example {
     border-top: 1px dashed var(--color-border-strong);
     padding-top: var(--space-6);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
   }
-  .sct__example-header {
+  .stc__example-header {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
     gap: var(--space-3);
   }
-  .sct__example-header h3 {
+  .stc__example-header h3 {
     font-size: 1.3rem;
     color: var(--color-text);
     margin: 0;
     font-weight: 600;
   }
 
-  .sct__rows {
+  .stc__rows {
     display: grid;
     gap: var(--space-3);
     margin: 0;
   }
-  .sct__row {
+  .stc__row {
     display: grid;
     grid-template-columns: 110px 1fr;
     gap: var(--space-4);
@@ -257,8 +257,8 @@ const examples: Array<{ kind?: string; code?: string }> =
     padding: var(--space-3) 0;
     border-top: 1px solid var(--color-border);
   }
-  .sct__row:first-child { border-top: 0; padding-top: 0; }
-  .sct__row dt {
+  .stc__row:first-child { border-top: 0; padding-top: 0; }
+  .stc__row dt {
     font-family: var(--font__mono);
     font-size: 0.75rem;
     letter-spacing: 0.16em;
@@ -266,16 +266,16 @@ const examples: Array<{ kind?: string; code?: string }> =
     color: var(--color-text-dim);
     padding-top: 6px;
   }
-  .sct__row dd {
+  .stc__row dd {
     margin: 0;
     color: var(--color-text);
   }
-  .sct__row-label {
+  .stc__row-label {
     font-size: 0.84rem;
     color: var(--color-text-dim);
     margin-bottom: var(--space-2);
   }
-  .sct__syntaxes {
+  .stc__syntaxes {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
@@ -283,13 +283,13 @@ const examples: Array<{ kind?: string; code?: string }> =
     padding: 0;
     margin: 0;
   }
-  .sct__syntaxes li {
+  .stc__syntaxes li {
     display: flex;
     align-items: center;
     gap: var(--space-3);
     flex-wrap: wrap;
   }
-  .sct__syntax-kind {
+  .stc__syntax-kind {
     font-family: var(--font__mono);
     font-size: 0.7rem;
     letter-spacing: 0.12em;
@@ -300,7 +300,7 @@ const examples: Array<{ kind?: string; code?: string }> =
     border-radius: var(--radius-sm);
     flex-shrink: 0;
   }
-  .sct__syntaxes code {
+  .stc__syntaxes code {
     font-family: var(--font__mono);
     font-size: 0.88rem;
     padding: 4px 9px;
@@ -312,8 +312,8 @@ const examples: Array<{ kind?: string; code?: string }> =
   }
 
   @media (max-width: 540px) {
-    .sct { padding: var(--space-6); }
-    .sct__row {
+    .stc { padding: var(--space-6); }
+    .stc__row {
       grid-template-columns: 1fr;
       gap: var(--space-2);
     }

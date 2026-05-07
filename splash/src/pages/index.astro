@@ -2,17 +2,17 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Header from '@components/Header.astro';
-import SctDiagram from '@components/SctDiagram.astro';
+import StcDiagram from '@components/StcDiagram.astro';
 import FeatureCard from '@components/FeatureCard.astro';
 import { STATIC_SEO } from '@lib/seo';
-import { formatDate } from '@lib/date';
+import { formatDate, toDate } from '@lib/date';
 
 // ─── Curated content ──────────────────────────────────────────────────────
 
-const sctExamples = await getCollection('sct-examples');
+const stcExamples = await getCollection('stc-examples');
 const featuredExample =
-  sctExamples.find((e) => e.data.featured === true) ??
-  sctExamples.sort(byOrder)[0];
+  stcExamples.find((e) => e.data.featured === true) ??
+  stcExamples.sort(byOrder)[0];
 
 const features = (await getCollection('feature-highlights')).sort(byOrder);
 
@@ -21,8 +21,8 @@ const features = (await getCollection('feature-highlights')).sort(byOrder);
 const changelog = (await getCollection('changelog'))
   .filter((e) => e.data.publish !== false)
   .sort((a, b) => {
-    const da = (a.data.date_modified ?? a.data.date_first_published ?? a.data.date_created ?? a.data.date) as Date | undefined;
-    const db = (b.data.date_modified ?? b.data.date_first_published ?? b.data.date_created ?? b.data.date) as Date | undefined;
+    const da = toDate(a.data.date_modified ?? a.data.date_first_published ?? a.data.date_created ?? a.data.date);
+    const db = toDate(b.data.date_modified ?? b.data.date_first_published ?? b.data.date_created ?? b.data.date);
     const ta = da ? da.getTime() : 0;
     const tb = db ? db.getTime() : 0;
     if (tb !== ta) return tb - ta;
@@ -85,7 +85,7 @@ const base = import.meta.env.BASE_URL;
       </div>
 
       <div class="hero__diagram">
-        <SctDiagram example={featuredExample} />
+        <StcDiagram example={featuredExample} />
       </div>
     </div>
   </section>
@@ -117,9 +117,9 @@ const base = import.meta.env.BASE_URL;
             <p class="folio" data-num="§ 2">Recent</p>
             <h2>What shipped lately</h2>
           </header>
-          <ul class="recent__list">
+          <ul class="recent__list" data-pagefind-ignore="all">
             {changelog.map((entry) => {
-              const d = (entry.data.date_modified ?? entry.data.date_first_published ?? entry.data.date_created ?? entry.data.date) as Date | undefined;
+              const d = toDate(entry.data.date_modified ?? entry.data.date_first_published ?? entry.data.date_created ?? entry.data.date);
               return (
                 <li class="recent__item">
                   <a href={`${base}changelog/${entry.id}/`}>
@@ -240,7 +240,7 @@ const base = import.meta.env.BASE_URL;
   }
 
   .hero__diagram {
-    /* SctDiagram brings its own card styling */
+    /* StcDiagram brings its own card styling */
   }
 
   /* ─── Section header ─── */

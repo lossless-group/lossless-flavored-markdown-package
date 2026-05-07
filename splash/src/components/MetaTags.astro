@@ -1,9 +1,14 @@
 ---
-import { STATIC_SEO } from '@lib/seo';
+import { STATIC_SEO, DEFAULT_OG } from '@lib/seo';
 
 interface Props {
   title: string;
   description?: string;
+  /**
+   * Either a fully-qualified URL (e.g. ImageKit) or a path under /public/.
+   * Defaults pulled from `DEFAULT_OG` in seo.ts. Pages can swap to any of
+   * the named entries in `OG_IMAGES` (banner / wide / square / portrait).
+   */
   ogImage?: string;
   ogImageWidth?: number;
   ogImageHeight?: number;
@@ -21,11 +26,11 @@ interface Props {
 const {
   title,
   description = STATIC_SEO.root.description,
-  ogImage = 'og-default.png',
-  ogImageWidth = 1200,
-  ogImageHeight = 630,
-  ogImageType = 'image/png',
-  ogImageAlt = STATIC_SEO.root.title,
+  ogImage = DEFAULT_OG.url,
+  ogImageWidth = DEFAULT_OG.width,
+  ogImageHeight = DEFAULT_OG.height,
+  ogImageType = DEFAULT_OG.type,
+  ogImageAlt = DEFAULT_OG.alt,
   ogType = 'website',
   noindex = false,
   canonical,

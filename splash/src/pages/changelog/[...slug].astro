@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import { formatDate } from '@lib/date';
+import { formatDate, toDate } from '@lib/date';
 
 export async function getStaticPaths() {
   const entries = await getCollection('changelog');
@@ -16,9 +16,9 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 
-const d = (entry.data.date_modified ?? entry.data.date_first_published ?? entry.data.date_created ?? entry.data.date) as Date | undefined;
-const created = entry.data.date_created as Date | undefined;
-const modified = entry.data.date_modified as Date | undefined;
+const d = toDate(entry.data.date_modified ?? entry.data.date_first_published ?? entry.data.date_created ?? entry.data.date);
+const created = toDate(entry.data.date_created);
+const modified = toDate(entry.data.date_modified);
 
 const base = import.meta.env.BASE_URL;
 ---
@@ -31,14 +31,22 @@ const base = import.meta.env.BASE_URL;
   modifiedTime={modified?.toISOString()}
   tags={entry.data.tags}
 >
-  <main class="entry">
+  <main
+    class="entry"
+    data-pagefind-body
+    data-pagefind-meta={`title:${entry.data.title ?? entry.id}`}
+  >
+    <span data-pagefind-filter="kind:Changelog" hidden></span>
+    <span data-pagefind-meta="kind:Changelog" hidden></span>
+    {entry.data.tags?.map((t) => <span data-pagefind-filter={`tag:${t}`} hidden></span>)}
+
     <div class="container-narrow">
-      <p class="entry__back mono">
+      <p class="entry__back mono" data-pagefind-ignore>
         <a href={`${base}changelog/`}>← Changelog</a>
       </p>
 
       <header class="entry__header">
-        <div class="entry__meta mono">
+        <div class="entry__meta mono" data-pagefind-ignore>
           {d && <time datetime={d.toISOString()}>{formatDate(d)}</time>}
           {entry.data.at_semantic_version && (
             <span class="entry__ver">{entry.data.at_semantic_version}</span>
@@ -49,7 +57,7 @@ const base = import.meta.env.BASE_URL;
         {entry.data.lede && <p class="entry__lede">{entry.data.lede}</p>}
         {
           entry.data.tags && entry.data.tags.length > 0 && (
-            <div class="entry__tags">
+            <div class="entry__tags" data-pagefind-ignore>
               {entry.data.tags.map((t) => (
                 <span class="entry__tag">{t}</span>
               ))}
