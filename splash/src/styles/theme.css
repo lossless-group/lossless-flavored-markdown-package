@@ -1,0 +1,500 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   theme.css — lfm/splash
+   Two-tier token system + three-mode contract per the Astro Knots convention.
+
+   Tier 1: NAMED tokens  (--color__violet-ink, --font__display)
+           Mode-invariant raw values.
+
+   Tier 2: SEMANTIC tokens (--color-bg, --color-accent)
+           Reference Tier 1; rebound per <html data-mode="...">.
+
+   Modes (all three first-class — but light is default for LFM specifically,
+   because LFM is a reading + writing tool first, a parser second):
+   - light   : default; "writer's mode" — paper-toned, manuscript-flavored.
+   - dark    : "operator mode" — deep ink, terminal-adjacent.
+   - vibrant : "demo mode" — saturated coral + sodium on near-black.
+
+   The toggle in the header writes data-mode on <html>; the inline script in
+   BaseLayout resolves persisted mode pre-paint to avoid FOUC.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ─── Tier 1: NAMED tokens — raw values, mode-invariant ──────────────── */
+
+  /* Brand spine — ink-violet, sienna, moss. Distinct from the cyan-led
+     palette used by sibling splashes. The hues are deliberately bookish:
+     violet for prose, sienna for code-warmth, moss for "live / stable". */
+  --color__violet-ink:   #5b3fd9;
+  --color__violet-deep:  #3a26a6;
+  --color__violet-soft:  #b9a8ff;
+  --color__sienna:       #c64f29;
+  --color__sienna-deep:  #8a3318;
+  --color__sienna-soft:  #f4b59a;
+  --color__moss:         #2f7a3f;
+  --color__moss-deep:    #1a4f28;
+  --color__moss-soft:    #9bd3a8;
+
+  /* Vibrant-mode signal hues */
+  --color__coral:        #ff5c4d;
+  --color__sodium:       #ffcd3a;
+  --color__iris:         #7a4dff;
+
+  /* Editorial neutrals — the paper / ink axis */
+  --color__paper:        #f8f3e8;   /* warm cream, not white */
+  --color__paper-soft:   #f0ead7;
+  --color__paper-deep:   #e6dec5;
+  --color__ink:          #16121e;
+  --color__ink-soft:     #2a2438;
+  --color__ink-deep:     #0a0710;
+  --color__charcoal:     #1f1a2a;
+  --color__slate-700:    #3a3348;
+  --color__slate-500:    #6b6479;
+  --color__slate-400:    #8b8499;
+  --color__slate-300:    #a8a2b4;
+  --color__slate-200:    #c8c2d2;
+  --color__slate-100:    #e0dce6;
+
+  /* Typography — Tier 1.
+     Display: Newsreader (variable, weights 400–700, axes for opsz).
+     Sans:    Manrope     (variable, weights 400–800).
+     Mono:    JetBrains Mono. */
+  --font__display: 'Newsreader', ui-serif, Georgia, 'Times New Roman', serif;
+  --font__sans:    'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font__mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Spacing — invariant */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Radii — squarer than memopop on purpose. LFM cards feel printed, not
+     glassy. Pills stay round. */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+
+  --transition-fast: 160ms ease;
+  --transition-mid:  320ms ease;
+
+  /* The manuscript-margin hairline — a single thin vertical rule at
+     ~80px from the left edge on wide viewports. Used by .bg-margin. */
+  --margin-rule-x: 80px;
+
+  color-scheme: light;
+}
+
+/* ─── Tier 2: SEMANTIC — LIGHT MODE (default; "writer's mode") ────────── */
+:root,
+:root[data-mode='light'] {
+  --color-bg:           var(--color__paper);
+  --color-bg-soft:      var(--color__paper-soft);
+  --color-bg-elevated:  #fffdf6;
+  --color-bg-card:      rgba(255, 253, 246, 0.92);
+  --color-bg-code:      var(--color__paper-deep);
+
+  --color-text:         var(--color__ink);
+  --color-text-soft:    var(--color__slate-700);
+  --color-text-dim:     var(--color__slate-500);
+  --color-text-dimmer:  #7a7388;
+  --color-text-faint:   var(--color__slate-400);
+
+  --color-accent:       var(--color__violet-ink);
+  --color-accent-soft:  var(--color__violet-deep);
+  --color-accent-warm:  var(--color__sienna);
+  --color-accent-hot:   var(--color__sienna-deep);
+
+  --color-thread:       var(--color__moss);
+  --color-thread-soft:  var(--color__moss-deep);
+
+  --color-border:       rgba(22, 18, 30, 0.10);
+  --color-border-strong: rgba(22, 18, 30, 0.22);
+  --color-border-accent: rgba(91, 63, 217, 0.4);
+
+  --shadow-glow:     0 0 50px rgba(91, 63, 217, 0.06);
+  --shadow-card:     0 1px 0 rgba(22, 18, 30, 0.06), 0 12px 24px -16px rgba(22, 18, 30, 0.18);
+  --shadow-elevated: 0 1px 0 rgba(22, 18, 30, 0.08), 0 24px 48px -22px rgba(22, 18, 30, 0.24);
+
+  --gradient-thread:
+    linear-gradient(110deg,
+      var(--color__violet-ink) 0%,
+      var(--color__sienna) 60%,
+      var(--color__moss) 100%);
+
+  /* Paper grain — extremely subtle layered noise via radial gradients.
+     Stays warm; never the cold "mesh" feel. */
+  --gradient-mesh-1: radial-gradient(ellipse at 12% 6%,  color-mix(in oklab, var(--color__violet-ink) 4%, transparent), transparent 55%);
+  --gradient-mesh-2: radial-gradient(ellipse at 88% 14%, color-mix(in oklab, var(--color__sienna) 4%, transparent), transparent 60%);
+  --gradient-mesh-3: radial-gradient(ellipse at 50% 100%, color-mix(in oklab, var(--color__moss) 3%, transparent), transparent 60%);
+
+  color-scheme: light;
+}
+
+/* ─── Tier 2: SEMANTIC — DARK MODE ("operator") ───────────────────────── */
+:root[data-mode='dark'] {
+  --color-bg:           var(--color__ink);
+  --color-bg-soft:      var(--color__charcoal);
+  --color-bg-elevated:  #221b30;
+  --color-bg-card:      rgba(31, 26, 42, 0.72);
+  --color-bg-code:      var(--color__ink-deep);
+
+  --color-text:         #f1ecf8;
+  --color-text-soft:    var(--color__slate-200);
+  --color-text-dim:     var(--color__slate-400);
+  --color-text-dimmer:  #6b6479;
+  --color-text-faint:   #4a4458;
+
+  --color-accent:       var(--color__violet-soft);
+  --color-accent-soft:  #d6c8ff;
+  --color-accent-warm:  var(--color__sienna-soft);
+  --color-accent-hot:   var(--color__sienna);
+
+  --color-thread:       var(--color__moss-soft);
+  --color-thread-soft:  #c5e7cd;
+
+  --color-border:       rgba(241, 236, 248, 0.10);
+  --color-border-strong: rgba(241, 236, 248, 0.22);
+  --color-border-accent: rgba(185, 168, 255, 0.5);
+
+  --shadow-glow:     0 0 60px rgba(91, 63, 217, 0.18);
+  --shadow-card:     0 18px 36px -22px rgba(0, 0, 0, 0.65);
+  --shadow-elevated: 0 24px 60px -28px rgba(0, 0, 0, 0.75);
+
+  --gradient-thread:
+    linear-gradient(110deg,
+      var(--color__violet-soft) 0%,
+      var(--color__sienna-soft) 55%,
+      var(--color__moss-soft) 100%);
+
+  --gradient-mesh-1: radial-gradient(ellipse at 12% 6%,  color-mix(in oklab, var(--color__violet-ink) 22%, transparent), transparent 55%);
+  --gradient-mesh-2: radial-gradient(ellipse at 88% 14%, color-mix(in oklab, var(--color__sienna) 14%, transparent), transparent 60%);
+  --gradient-mesh-3: radial-gradient(ellipse at 50% 100%, color-mix(in oklab, var(--color__moss) 12%, transparent), transparent 60%);
+
+  color-scheme: dark;
+}
+
+/* ─── Tier 2: SEMANTIC — VIBRANT MODE ("demo") ────────────────────────── */
+:root[data-mode='vibrant'] {
+  --color-bg:           var(--color__ink-deep);
+  --color-bg-soft:      #110a18;
+  --color-bg-elevated:  #1c1430;
+  --color-bg-card:      rgba(28, 20, 48, 0.74);
+  --color-bg-code:      #060410;
+
+  --color-text:         #fff5e8;
+  --color-text-soft:    #f0d9b8;
+  --color-text-dim:     #d8b08c;
+  --color-text-dimmer:  #8c6e5c;
+  --color-text-faint:   #5a4838;
+
+  --color-accent:       var(--color__sodium);
+  --color-accent-soft:  #ffe098;
+  --color-accent-warm:  var(--color__coral);
+  --color-accent-hot:   var(--color__iris);
+
+  --color-thread:       var(--color__coral);
+  --color-thread-soft:  #ffa898;
+
+  --color-border:       rgba(255, 205, 58, 0.16);
+  --color-border-strong: rgba(255, 205, 58, 0.34);
+  --color-border-accent: rgba(255, 92, 77, 0.6);
+
+  --shadow-glow:     0 0 80px rgba(255, 205, 58, 0.28);
+  --shadow-card:     0 22px 60px -28px rgba(255, 92, 77, 0.45);
+  --shadow-elevated: 0 30px 80px -30px rgba(122, 77, 255, 0.5);
+
+  --gradient-thread:
+    linear-gradient(110deg,
+      var(--color__sodium) 0%,
+      var(--color__coral) 50%,
+      var(--color__iris) 100%);
+
+  --gradient-mesh-1: radial-gradient(ellipse at 12% 6%,  color-mix(in oklab, var(--color__sodium) 20%, transparent), transparent 55%);
+  --gradient-mesh-2: radial-gradient(ellipse at 88% 14%, color-mix(in oklab, var(--color__coral) 22%, transparent), transparent 60%);
+  --gradient-mesh-3: radial-gradient(ellipse at 50% 100%, color-mix(in oklab, var(--color__iris) 18%, transparent), transparent 60%);
+
+  color-scheme: dark;
+}
+
+/* ─── Reset & base ────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-bg);
+  transition: background var(--transition-mid);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font__sans);
+  font-size: 16px;
+  line-height: 1.6;
+  font-feature-settings: 'ss01' on, 'ss02' on;   /* Manrope stylistic sets */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  overflow-x: hidden;
+  transition: background var(--transition-mid), color var(--transition-mid);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font__display);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+  color: var(--color-text);
+  /* Newsreader axis tuning — display sizes on headings, smaller opsz inline. */
+  font-variation-settings: 'opsz' 36;
+}
+h1 { font-variation-settings: 'opsz' 60; font-weight: 500; }
+h2 { font-variation-settings: 'opsz' 36; }
+h3 { font-variation-settings: 'opsz' 28; }
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  transition: color var(--transition-fast);
+}
+a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+ul, ol { list-style: none; }
+img { max-width: 100%; height: auto; }
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 35%, transparent);
+  color: var(--color-text);
+}
+
+/* ─── Background ornament — paper grain + manuscript margin rule ──────── */
+.bg-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    var(--gradient-mesh-1),
+    var(--gradient-mesh-2),
+    var(--gradient-mesh-3);
+  transition: background var(--transition-mid);
+}
+
+/* Paper grain — overlaid SVG noise via data URI, very low opacity so it
+   reads as texture rather than visual noise. */
+.bg-mesh::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+  opacity: 0.06;
+  mix-blend-mode: multiply;
+}
+:root[data-mode='dark'] .bg-mesh::before,
+:root[data-mode='vibrant'] .bg-mesh::before {
+  mix-blend-mode: screen;
+  opacity: 0.04;
+}
+
+/* The manuscript margin — a single hairline rule at --margin-rule-x.
+   Hidden on narrow viewports. */
+.bg-mesh::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--margin-rule-x);
+  width: 1px;
+  background: var(--color-border);
+  opacity: 0.7;
+}
+@media (max-width: 880px) {
+  .bg-mesh::after { display: none; }
+}
+
+body > :not(.bg-mesh) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Utility primitives ─────────────────────────────────────────────── */
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.container-narrow {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.mono    { font-family: var(--font__mono); }
+.display { font-family: var(--font__display); }
+
+.eyebrow {
+  font-family: var(--font__mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+/* Section folio — the manuscript-style chapter mark.
+   Used at the top of major sections instead of memopop's centered eyebrows. */
+.folio {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-family: var(--font__mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.folio::before {
+  content: attr(data-num);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-size: 0.78rem;
+  letter-spacing: 0;
+}
+
+.gradient-text {
+  background: var(--gradient-thread);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font__mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-soft);
+  background: color-mix(in oklab, var(--color-text) 4%, transparent);
+}
+.pill[data-status='Active'],
+.pill[data-status='Stable'],
+.pill[data-status='live'] {
+  color: var(--color-thread);
+  border-color: color-mix(in oklab, var(--color-thread) 50%, transparent);
+  background: color-mix(in oklab, var(--color-thread) 12%, transparent);
+}
+.pill[data-status='Beta'] {
+  color: var(--color-accent);
+  border-color: color-mix(in oklab, var(--color-accent) 50%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+}
+.pill[data-status='Alpha'],
+.pill[data-status='Experiment'],
+.pill[data-status='planned'],
+.pill[data-status='Draft'] {
+  color: var(--color-accent-warm);
+  border-color: color-mix(in oklab, var(--color-accent-warm) 50%, transparent);
+  background: color-mix(in oklab, var(--color-accent-warm) 12%, transparent);
+}
+
+.from-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font__mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-thread);
+  background: color-mix(in oklab, var(--color-thread) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-thread) 35%, transparent);
+}
+.from-tag::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-thread);
+}
+
+/* Code chip — small inline code-styled tags used for paths/syntaxes. */
+.chip {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font__mono);
+  font-size: 0.82em;
+  background: var(--color-bg-code);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-soft);
+  white-space: nowrap;
+}
+
+/* Ghost button — borderless-feeling primary action. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-family: var(--font__sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+}
+.btn:hover {
+  border-color: var(--color-accent);
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+}
+.btn-primary:hover {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent-soft);
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "lfm-splash",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "description": "GitHub Pages splash for @lossless-group/lfm",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.16.6"
+  }
+}

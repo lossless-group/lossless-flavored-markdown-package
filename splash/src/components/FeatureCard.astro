@@ -1,0 +1,142 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'feature-highlights'>;
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+const { Content } = await render(entry);
+---
+
+<article class={`feature ${data.featured ? 'feature--featured' : ''}`}>
+  <header class="feature__head">
+    <span class="feature__icon" aria-hidden="true">{data.icon ?? '◆'}</span>
+    <div class="feature__title-row">
+      <h3 class="feature__title">{data.title}</h3>
+      {data.status && <span class="pill" data-status={data.status}>{data.status}</span>}
+    </div>
+    {data.lede && <p class="feature__lede">{data.lede}</p>}
+  </header>
+
+  <div class="feature__body prose">
+    <Content />
+  </div>
+
+  {
+    data.tags && data.tags.length > 0 && (
+      <footer class="feature__tags">
+        {data.tags.map((tag) => (
+          <span class="feature__tag">{tag}</span>
+        ))}
+      </footer>
+    )
+  }
+</article>
+
+<style>
+  .feature {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+  }
+  .feature:hover {
+    border-color: var(--color-border-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+  }
+
+  .feature--featured {
+    grid-column: span 2;
+    border-color: color-mix(in oklab, var(--color-accent) 30%, var(--color-border));
+  }
+  .feature--featured::before {
+    content: 'Featured';
+    position: absolute;
+    top: -10px;
+    left: var(--space-5);
+    padding: 2px 9px;
+    background: var(--color-accent);
+    color: var(--color-bg);
+    font-family: var(--font__mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+  }
+  @media (max-width: 720px) {
+    .feature--featured { grid-column: span 1; }
+  }
+
+  .feature__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .feature__icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--color-accent);
+  }
+
+  .feature__title-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .feature__title {
+    font-family: var(--font__mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+
+  .feature__lede {
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .feature__body {
+    font-size: 0.92rem;
+    color: var(--color-text-soft);
+    max-width: none;
+  }
+  .feature__body :global(p) { margin-top: var(--space-3); }
+  .feature__body :global(p:first-child) { margin-top: 0; }
+  .feature__body :global(code) {
+    font-size: 0.86em;
+    padding: 1px 5px;
+  }
+
+  .feature__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--color-border);
+  }
+  .feature__tag {
+    font-family: var(--font__mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: var(--color-text-dim);
+    padding: 2px 7px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+</style>
