@@ -187,6 +187,9 @@ The main “Lossless article” path for markdown is:
   - `inlineCode`: styles inline code tokens.
   - `html`: injects raw HTML via `set:html`, relying on `rehypeRaw` from `astro.config.mjs`.
   - `blockquote`: uses `ArticleCallout` for styled callouts.
+  - `containerDirective` with `name === 'callout'`: uses `Callout.astro`
+    (produced by `remarkCallouts` from `> [!type] Title` syntax — see §X
+    "Callout nesting policy" below).
   - `citations` / `citation`: uses `ArticleCitationsBlock` and `ArticleCitation` components.
 
 - **Directive handling (extended markdown)**
@@ -318,3 +321,61 @@ When adding new extended markdown features:
     - Optionally, a **spec** under `content/specs` for deeper implementation details.
 
 This blueprint ties together the Lossless site’s markdown and extended-markdown pipeline—across content locations, the Astro config, the unified/remark stack, and the `AstroMarkdown` renderer—so future work can extend it without breaking existing behavior.
+
+---
+
+## 7. Callout Nesting Policy
+
+Callouts in LFM are **containers**, not rendering-only blocks. Every LFM and `AstroMarkdown` feature available at the document level — other directives (`:::youtube`, `:::image-gallery`, `:::tooling-gallery`), citations (`[^a1b2c3]`), fenced code blocks, GFM tables, link previews, video embeds, image directives, and even other callouts — MUST work when nested inside a callout body.
+
+This is **intentional and divergent from upstream conventions**:
+
+- **CommonMark blockquotes** carry markdown children but typically render plainly and do not participate in extended pipelines.
+- **Obsidian callouts** support some inline markdown (bold, italic, links) but are not full participants in the render pipeline — custom embeds, directives, and citation systems generally do not work inside them.
+
+In LFM we deliberately enable full nesting. The `remarkCallouts` plugin produces a `containerDirective` MDAST node whose children are ordinary block-level MDAST nodes — so when `AstroMarkdown` recursively descends into the callout's children, every other branch in its node-handling switch fires normally. There is no safety challenge here: a callout is just a container in the MDAST, and rendering its children through the same renderer used for the rest of the document is simpler than maintaining a "what works where" allowlist that would inevitably drift over time.
+
+**Implementation requirement:** any Callout component (per-site copy or canonical pattern) MUST recursively render `node.children` via `<AstroMarkdown node={child} data={data} />` (or equivalent self-recursion). The `mdast-util-to-string` fallback path that early scaffolds sometimes ship with disables nesting silently — remove it.
+
+```astro
+---
+// Callout.astro — correct pattern
+import AstroMarkdown from "./AstroMarkdown.astro";
+const children = Array.isArray(node?.children) ? node.children : [];
+---
+<aside class={`ak-callout ak-callout--${type}`}>
+  {children.map((child) => <AstroMarkdown node={child} data={data} />)}
+</aside>
+```
+
+**Anti-pattern** (silently disables nesting):
+
+```astro
+---
+import { toString } from "mdast-util-to-string";
+---
+<aside><p>{toString(node)}</p></aside>
+```
+
+**Author-facing implication:** the following authoring shapes all work and are
+expected to render correctly:
+
+```markdown
+> [!info] With a citation inside
+> Aging populations drive structural healthcare costs.[^a1b2c3]
+
+> [!example] With a fenced code block
+> ```ts
+> const callout = resolveCalloutType('warn'); // → 'warning'
+> ```
+
+> [!warning] With a directive inside
+> :::youtube{id="dQw4w9WgXcQ"}
+
+> [!quote] With a nested callout
+> "The best way to predict the future is to invent it." — Alan Kay
+>
+> > [!note] Editor's note
+> > Said in a 1971 talk at PARC.
+```
+
