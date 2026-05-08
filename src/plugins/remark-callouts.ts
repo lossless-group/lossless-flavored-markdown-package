@@ -14,10 +14,13 @@ import type { Plugin } from 'unified';
 
 // Matches the title line of a callout: `[!type]` optionally followed by `-`
 // (Obsidian's foldable / "no header" indicator) and optional title text.
+// The type identifier accepts `[A-Za-z0-9_-]+` so hyphenated types like
+// `[!llm-response]` and `[!image-gallery]` are recognized — `\w` alone
+// would silently drop them as plain blockquotes.
 //   match[1] = type (lowercased downstream)
 //   match[2] = '-' if foldable, else undefined
 //   match[3] = title text (may be empty)
-const CALLOUT_REGEX = /^\[!(\w+)\](-)?\s*(.*)?$/;
+const CALLOUT_REGEX = /^\[!([\w-]+)\](-)?\s*(.*)?$/;
 
 /**
  * Remark plugin that transforms Obsidian-style callouts (`> [!type] Title`)
