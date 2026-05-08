@@ -65,7 +65,7 @@ Two equivalent ways to consume from JSR with pnpm:
 // package.json — npm-alias form (works on any pnpm version)
 {
   "dependencies": {
-    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.2.2"
+    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.2.3"
   }
 }
 ```
@@ -79,12 +79,12 @@ Two equivalent ways to consume from JSR with pnpm:
 // package.json — pnpm jsr: protocol form (newer pnpm)
 {
   "dependencies": {
-    "@lossless-group/lfm": "jsr:^0.2.2"
+    "@lossless-group/lfm": "jsr:^0.2.3"
   }
 }
 ```
 
-**Mirror on GitHub Packages** ([github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm)) is published as parity but isn't the recommended consumption path. If you do want it, add `@lossless-group:registry=https://npm.pkg.github.com` plus a `${GITHUB_TOKEN}` auth line to `.npmrc` and install as `@lossless-group/lfm@^0.2.2`.
+**Mirror on GitHub Packages** ([github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm)) is published as parity but isn't the recommended consumption path. If you do want it, add `@lossless-group:registry=https://npm.pkg.github.com` plus a `${GITHUB_TOKEN}` auth line to `.npmrc` and install as `@lossless-group/lfm@^0.2.3`.
 
 **Astro consumers:** the sister scaffold `@lossless-group/lfm-astro` lives at [`../lfm-astro/`](../lfm-astro/) — components and integration glue for Astro sites. Not yet published; track its progress in the [astro-knots changelog](https://github.com/lossless-group/astro-knots/tree/master/changelog) and use this package directly in the meantime.
 
