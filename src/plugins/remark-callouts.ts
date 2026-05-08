@@ -12,7 +12,12 @@
 import type { Root, Blockquote, Paragraph, Text } from 'mdast';
 import type { Plugin } from 'unified';
 
-const CALLOUT_REGEX = /^\[!(\w+)\]\s*(.*)?$/;
+// Matches the title line of a callout: `[!type]` optionally followed by `-`
+// (Obsidian's foldable / "no header" indicator) and optional title text.
+//   match[1] = type (lowercased downstream)
+//   match[2] = '-' if foldable, else undefined
+//   match[3] = title text (may be empty)
+const CALLOUT_REGEX = /^\[!(\w+)\](-)?\s*(.*)?$/;
 
 /**
  * Remark plugin that transforms Obsidian-style callouts (`> [!type] Title`)
@@ -64,29 +69,50 @@ function tryTransformCallout(blockquote: Blockquote): any | null {
   if (!firstInline || firstInline.type !== 'text') return null;
 
   const text = firstInline as Text;
-  const match = text.value.match(CALLOUT_REGEX);
+
+  // CommonMark folds the title line and any soft-wrapped body lines into a
+  // single text node separated by `\n`. Match only against line 1 so the
+  // regex doesn't fail on multi-line callouts. Body lines (post-`\n`) flow
+  // into the callout's first paragraph below.
+  const newlineIdx = text.value.indexOf('\n');
+  const firstLine = newlineIdx === -1 ? text.value : text.value.slice(0, newlineIdx);
+  const restOfFirstText = newlineIdx === -1 ? '' : text.value.slice(newlineIdx + 1);
+
+  const match = firstLine.match(CALLOUT_REGEX);
   if (!match) return null;
 
   const calloutType = match[1].toLowerCase();
-  const title = match[2]?.trim() || undefined;
+  const isFoldable = match[2] === '-';
+  const titleText = match[3]?.trim() ?? '';
+  // Foldable `[!type]-` with no title => explicit empty title (suppresses
+  // header). Plain `[!type]` with no title => omit attribute (renderer uses
+  // default label). Non-empty title => pass through.
+  const title = isFoldable && titleText === '' ? '' : (titleText || undefined);
 
-  // Build the children for the callout: everything after the [!type] line
+  // Build the callout body: remaining inline (after the first text node) plus
+  // any body content the first text node carried after its first newline,
+  // plus subsequent block-level children of the blockquote.
   const remainingInline = paragraph.children.slice(1);
   const remainingBlocks = blockquote.children.slice(1);
 
-  // If there's text remaining in the first paragraph after the callout marker,
-  // strip the leading newline and include it
   const calloutChildren: any[] = [];
+  const firstParagraphInline: any[] = [];
 
-  if (remainingInline.length > 0) {
-    // Strip leading newline from first remaining inline
-    const first = remainingInline[0];
+  if (restOfFirstText.length > 0) {
+    firstParagraphInline.push({ type: 'text', value: restOfFirstText });
+  }
+  firstParagraphInline.push(...remainingInline);
+
+  if (firstParagraphInline.length > 0) {
+    // Strip leading newline if the next inline starts with one (e.g. when
+    // remark-parse split the title and body across separate text nodes).
+    const first = firstParagraphInline[0];
     if (first.type === 'text' && first.value.startsWith('\n')) {
-      remainingInline[0] = { ...first, value: first.value.slice(1) };
+      firstParagraphInline[0] = { ...first, value: first.value.slice(1) };
     }
     calloutChildren.push({
       type: 'paragraph',
-      children: remainingInline,
+      children: firstParagraphInline,
     });
   }
 
@@ -97,7 +123,9 @@ function tryTransformCallout(blockquote: Blockquote): any | null {
     name: 'callout',
     attributes: {
       type: calloutType,
-      ...(title ? { title } : {}),
+      // Pass through empty-string title for foldable `[!type]-` so the
+      // renderer can distinguish "explicit no header" from "use default label".
+      ...(title !== undefined ? { title } : {}),
     },
     children: calloutChildren,
     data: {
