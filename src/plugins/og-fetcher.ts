@@ -27,15 +27,17 @@ import type { OGFetchOptions, LinkPreviewData } from '../types/index.js';
 import { createOGDispatcher } from '../utils/og-dispatcher.js';
 
 /**
- * MDAST `link` nodes get this attached to their `data` field after the
- * fetcher runs. Renderers cast `node.data.linkPreview` as `LinkPreviewData`.
+ * MDAST `link` nodes get `linkPreview` and (optionally) `skipOgFetch`
+ * attached to their `data` field by this plugin. We previously augmented
+ * the upstream `mdast.LinkData` interface via `declare module 'mdast'`,
+ * but JSR rejects ambient module declarations (slow-types check) — they
+ * modify a third-party module's types from outside, which breaks the
+ * automatic .d.ts generation JSR does for Node consumers.
+ *
+ * Renderers should cast `node.data.linkPreview` to `LinkPreviewData` at
+ * read sites. Writes inside this file use a spread + cast.
  */
-declare module 'mdast' {
-  interface LinkData {
-    linkPreview?: LinkPreviewData;
-    skipOgFetch?: boolean;
-  }
-}
+type LinkDataExtras = { linkPreview?: LinkPreviewData; skipOgFetch?: boolean };
 
 /**
  * Collect every `link` node in the tree whose `url` is http(s) and that
@@ -48,7 +50,7 @@ function collectExternalLinks(node: any, sink: Link[]): void {
   if (!node) return;
   if (node.type === 'link') {
     const url: string | undefined = node.url;
-    const skipped = node.data?.skipOgFetch === true;
+    const skipped = (node.data as LinkDataExtras | undefined)?.skipOgFetch === true;
     if (url && /^https?:\/\//i.test(url) && !skipped) {
       sink.push(node as Link);
     }
@@ -91,7 +93,7 @@ export const remarkOgFetcher: Plugin<[OGFetchOptions?], Root> = function (option
       const result = results[i];
       const targets = byUrl.get(url) ?? [];
       for (const link of targets) {
-        link.data = { ...(link.data ?? {}), linkPreview: result.data };
+        link.data = { ...(link.data ?? {}), linkPreview: result.data } as typeof link.data & LinkDataExtras;
       }
     }
 
