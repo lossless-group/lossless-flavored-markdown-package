@@ -37,6 +37,10 @@ export { remarkCallouts } from './plugins/remark-callouts.js';
 /** Citation processor — hex-code renumbering, structured definition parsing. */
 export { remarkCitations } from './plugins/remark-citations.js';
 
+/** Obsidian wikilink resolver — site-configured internal/external path mapping
+ *  for `[[Page]]`, `[[Page|Display]]`, `[[folder/Page#Section|Display]]`. */
+export { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
+
 /** Build-time Open Graph metadata fetcher — enriches external links with preview data. */
 export { remarkOgFetcher } from './plugins/og-fetcher.js';
 
@@ -75,6 +79,12 @@ export type {
   LfmCalloutNode,
   /** Options for the remarkLfm preset. */
   RemarkLfmOptions,
+  /** Input passed to a wikilink resolver function. */
+  WikilinkResolverInput,
+  /** Resolution returned by a wikilink resolver function. */
+  WikilinkResolution,
+  /** Options for the remarkLosslessWikilinks plugin. */
+  WikilinkOptions,
   /** Render-surface metadata for a single link. */
   LinkPreviewData,
   /** Result returned by an OG backend. */

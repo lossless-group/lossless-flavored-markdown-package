@@ -67,8 +67,66 @@ export interface RemarkLfmOptions {
   directives?: boolean;
   /** Enable citation processing (hex-code renumbering, structured definitions). Default: true */
   citations?: boolean;
+  /**
+   * Enable Obsidian wikilink resolution. Disabled by default — wikilink
+   * destinations are inherently per-site, so consumers must supply a
+   * `resolver` function via `WikilinkOptions`. Omit (or pass `false`) to
+   * leave `[[...]]` syntax as plain markdown text.
+   */
+  wikilinks?: WikilinkOptions | false;
   /** Build-time Open Graph fetch options. Disabled when omitted. */
   ogFetch?: OGFetchOptions;
+}
+
+/**
+ * Input passed to a wikilink resolver function. Produced by the plugin from
+ * a single `[[...]]` match before any URL templating happens.
+ */
+export interface WikilinkResolverInput {
+  /** The path part — `[[folder/Page#Section|Display]]` → `"folder/Page"`.
+   *  Original casing as authored. Resolvers should lowercase before
+   *  prefix-matching since authoring conventions drift over time. */
+  path: string;
+  /** Section anchor without the leading `#`, or `null`. */
+  anchor: string | null;
+  /** Author-supplied display text after the `|`, or `null`. The plugin
+   *  derives a fallback display when this is `null`, but a resolver can
+   *  override that by setting `display` on its return value. */
+  display: string | null;
+  /** The raw `[[...]]` text. Useful for debugging / audit reporting. */
+  raw: string;
+}
+
+/**
+ * Resolution returned by a wikilink resolver function. The plugin uses
+ * this verbatim to build the `link` MDAST node.
+ */
+export interface WikilinkResolution {
+  /** Where the link points. May be a fully-qualified URL or a path-only
+   *  route for same-site links (e.g. `/essays/foo-bar`). */
+  url: string;
+  /** True for same-site routes. Drives the `wikilink--local` class
+   *  downstream and skips `target="_blank"` on the rendered anchor. */
+  isLocal: boolean;
+  /** Final display text. Used verbatim — the resolver is responsible for
+   *  any deslugify / casing transformations. */
+  display: string;
+  /** Optional extra CSS classes appended after the base
+   *  `wikilink wikilink--{local|external}` classes. */
+  classes?: string[];
+}
+
+/**
+ * Options for the `remarkLosslessWikilinks` plugin.
+ */
+export interface WikilinkOptions {
+  /** Site-supplied resolver. Returns a resolution, or `null` to render
+   *  the wikilink as plain display text (no anchor, no class). */
+  resolver: (input: WikilinkResolverInput) => WikilinkResolution | null;
+  /** Optional. Called once per unresolved wikilink — typically pipes into
+   *  a build-time audit log. Errors thrown here are swallowed so a bad
+   *  callback never breaks parsing. */
+  onUnresolved?: (input: WikilinkResolverInput) => void;
 }
 
 /**

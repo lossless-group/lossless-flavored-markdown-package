@@ -65,7 +65,7 @@ Two equivalent ways to consume from JSR with pnpm:
 // package.json — npm-alias form (works on any pnpm version)
 {
   "dependencies": {
-    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.2.3"
+    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.3.0"
   }
 }
 ```
@@ -79,12 +79,12 @@ Two equivalent ways to consume from JSR with pnpm:
 // package.json — pnpm jsr: protocol form (newer pnpm)
 {
   "dependencies": {
-    "@lossless-group/lfm": "jsr:^0.2.3"
+    "@lossless-group/lfm": "jsr:^0.3.0"
   }
 }
 ```
 
-**Mirror on GitHub Packages** ([github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm)) is published as parity but isn't the recommended consumption path. If you do want it, add `@lossless-group:registry=https://npm.pkg.github.com` plus a `${GITHUB_TOKEN}` auth line to `.npmrc` and install as `@lossless-group/lfm@^0.2.3`.
+**Mirror on GitHub Packages** ([github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm)) is published as parity but isn't the recommended consumption path. If you do want it, add `@lossless-group:registry=https://npm.pkg.github.com` plus a `${GITHUB_TOKEN}` auth line to `.npmrc` and install as `@lossless-group/lfm@^0.3.0`.
 
 **Astro consumers:** the sister scaffold `@lossless-group/lfm-astro` lives at [`../lfm-astro/`](../lfm-astro/) — components and integration glue for Astro sites. Not yet published; track its progress in the [astro-knots changelog](https://github.com/lossless-group/astro-knots/tree/master/changelog) and use this package directly in the meantime.
 
@@ -128,6 +128,7 @@ import { remarkCallouts } from '@lossless-group/lfm';
 | remark-directive | `:::name{}` directive syntax parsing |
 | remark-callouts | Obsidian `> [!type] Title` → directive normalization |
 | remark-citations | Hex-code footnote renumbering + structured citation extraction |
+| remark-lossless-wikilinks | Obsidian `[[Page]]` / `[[folder/Page#Section\|Display]]` → resolved `link` MDAST nodes via a site-supplied resolver. Internal vs external destinations are a per-site decision the package never bakes in. |
 | remark-link-preview | `:::link-preview` / `:::link-rollup` directives → annotated AST nodes carrying `data.linkPreviewSpec` (the format taxonomy a renderer dispatches on) |
 | remark-og-fetcher | Build-time OpenGraph fetcher that enriches link nodes with `LinkPreviewData` (cache-backed, configurable backend) |
 
@@ -145,8 +146,149 @@ const tree = await parseMarkdown(content, {
   directives: true,  // Directive syntax (default: true)
   callouts: true,    // Obsidian callout normalization (default: true)
   citations: true,   // Hex-code footnote renumbering (default: true)
+  // wikilinks: { resolver: ... }   // see Wikilinks section below — opt-in
 });
 ```
+
+## Wikilinks (Obsidian-style internal/external resolution)
+
+Obsidian wikilinks (`[[Page]]`, `[[Page|Display]]`, `[[folder/Page#Section|Display]]`) are first-class authoring vocabulary in vaults — and dead text in standard Markdown. `remarkLosslessWikilinks` resolves them into proper `link` MDAST nodes against a **site-supplied resolver function**. The plugin owns the syntax (regex, MDAST splice, link node shape); each site owns its destinations (which prefix routes where, what's local vs external, what's intentionally parked).
+
+This split exists because wikilink destinations are inherently per-site. The same `[[Vocabulary/Polyrepo]]` resolves to `lossless.group/more-about/polyrepo` from one site and `glossary.example.com/polyrepo` from another. Baking a default resolver into the package would be wrong for every consumer except the one we picked.
+
+### Quick start
+
+```ts
+import { parseMarkdown } from '@lossless-group/lfm';
+
+const tree = await parseMarkdown(content, {
+  wikilinks: {
+    resolver: (input) => {
+      const path = input.path.toLowerCase();
+
+      // Internal: same-site routes (path-only URL, isLocal: true).
+      if (path.startsWith('essays/')) {
+        const slug = path.slice('essays/'.length).replace(/\s+/g, '-');
+        return {
+          url: `/essays/${slug}`,
+          isLocal: true,
+          display: input.display ?? input.path.split('/').pop() ?? '',
+        };
+      }
+
+      // External: full URLs (isLocal: false → target="_blank" added).
+      if (path.startsWith('vocabulary/') || path.startsWith('concepts/')) {
+        const slug = path.replace(/^[^/]+\//, '').replace(/\s+/g, '-');
+        return {
+          url: `https://www.lossless.group/more-about/${slug}`,
+          isLocal: false,
+          display: input.display ?? input.path.split('/').pop() ?? '',
+        };
+      }
+
+      // No match → render as plain display text. The plugin handles
+      // the fallback display string automatically.
+      return null;
+    },
+    onUnresolved: (input) => {
+      console.log(`[wikilinks] unresolved: ${input.raw}`);
+    },
+  },
+});
+```
+
+### Resolver contract
+
+```ts
+import type {
+  WikilinkResolverInput,
+  WikilinkResolution,
+  WikilinkOptions,
+} from '@lossless-group/lfm';
+
+// Input — produced by the plugin from one [[...]] match.
+interface WikilinkResolverInput {
+  path: string;          // "Vocabulary/Build Systems"
+  anchor: string | null; // "Section Heading" or null
+  display: string | null;// author-supplied or null
+  raw: string;           // the literal "[[...]]"
+}
+
+// Output — used verbatim to build the <a> node, OR null to render
+// the wikilink as plain display text (no anchor, no class).
+interface WikilinkResolution {
+  url: string;          // "/essays/foo" or "https://..."
+  isLocal: boolean;     // true → wikilink--local class, no target=_blank
+  display: string;      // final visible text
+  classes?: string[];   // extra CSS classes appended to the base
+}
+```
+
+### Rendering
+
+Resolved wikilinks emit standard `link` MDAST nodes with `data.hProperties.class` set to `wikilink wikilink--local` or `wikilink wikilink--external`. External wikilinks also get `target="_blank" rel="noopener noreferrer"`. **No custom MDAST node type, no custom renderer component required** — the regular link branch in your AstroMarkdown / rehype-react / etc. pipeline handles them.
+
+```html
+<!-- External -->
+<a class="wikilink wikilink--external"
+   target="_blank" rel="noopener noreferrer"
+   href="https://www.lossless.group/more-about/build-systems">Build Systems</a>
+
+<!-- Internal -->
+<a class="wikilink wikilink--local"
+   href="/essays/foo-bar">Foo Bar</a>
+```
+
+### What gets matched (and what doesn't)
+
+The plugin walks `text` MDAST nodes only. Wikilink syntax inside fenced code blocks, inline code, and HTML stays literal:
+
+````markdown
+This [[Vocabulary/Polyrepo]] resolves.
+
+But ` [[concepts/foo]] ` (inline code) does NOT.
+
+```ts
+const ex = '[[Tooling/Bazel]]'; // also untouched — code fence
+```
+````
+
+### When the resolver returns `null`
+
+Operating principle: *supporting 40% of intended wikilinks is better than supporting none.* Unresolved wikilinks render as plain prose — just the display string (or path's last segment, with `.md` stripped and hyphens turned to spaces). No `<a>`, no class, no markup hint. The optional `onUnresolved` callback fires once per unresolved match — typical use is piping into a build-time audit log.
+
+### A worked example: per-site resolver with rule arrays
+
+The recommended pattern for non-trivial sites is to declare prefix rules as data, not as `if`-branches in the resolver:
+
+```ts
+const PREFIX_RULES = [
+  { prefix: 'essays/',     template: '/essays/{slug}',                                 isLocal: true },
+  { prefix: 'tooling/',    template: 'https://www.lossless.group/toolkit/{slug}',      isLocal: false },
+  { prefix: 'vocabulary/', template: 'https://www.lossless.group/more-about/{slug}',   isLocal: false },
+  { prefix: 'concepts/',   template: 'https://www.lossless.group/more-about/{slug}',   isLocal: false },
+];
+
+const slugify = (s: string) =>
+  s.split('/').map(seg => seg.trim().toLowerCase().replace(/\s+/g, '-')).join('/');
+
+const resolver = (input: WikilinkResolverInput): WikilinkResolution | null => {
+  const lower = input.path.toLowerCase();
+  for (const rule of PREFIX_RULES) {
+    if (lower.startsWith(rule.prefix)) {
+      const tail = lower.slice(rule.prefix.length);
+      return {
+        url: rule.template.replace('{slug}', slugify(tail)),
+        isLocal: rule.isLocal,
+        display: input.display ?? input.path.split('/').pop() ?? '',
+      };
+    }
+  }
+  return null;
+};
+```
+
+Adding a destination is then six lines in the rule array. The reference implementation in `mpstaton-site` adds two more rule shapes (`ExactRule` for one-off overrides, `DeferredRule` for "deliberately parked, don't keep showing up as untouched"). Both are optional.
 
 ## OG fetching (build-time)
 

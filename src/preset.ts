@@ -18,6 +18,7 @@ import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import { remarkCallouts } from './plugins/remark-callouts.js';
 import { remarkCitations } from './plugins/remark-citations.js';
+import { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
 import { remarkOgFetcher } from './plugins/og-fetcher.js';
 import { remarkLinkPreview } from './plugins/remark-link-preview.js';
 import type { RemarkLfmOptions } from './types/index.js';
@@ -66,6 +67,14 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // Citations must come after gfm (which creates footnote nodes).
   if (opts.citations) {
     processor.use(remarkCitations as Plugin);
+  }
+
+  // Wikilinks: opt-in only — destinations are per-site, so a resolver is
+  // required. Runs after callouts so wikilinks inside `> [!info]` callout
+  // bodies still resolve. Skipped entirely when `wikilinks` is omitted or
+  // `false`, which is the default.
+  if (opts.wikilinks && opts.wikilinks !== (false as any)) {
+    processor.use(remarkLosslessWikilinks, opts.wikilinks);
   }
 
   // OG fetcher runs before the link-preview annotator so the per-URL
