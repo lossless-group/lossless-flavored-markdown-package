@@ -1,0 +1,269 @@
+---
+// Live gallery for the code-fence format registry.
+//
+// Imports LFM's source directly (same repo) so this proves the working tree,
+// not the last release. Each section shows what the handler actually produces:
+// a tree, a URL, a parsed summary, or just a claimed language.
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import { remarkCodeFences } from '../../../../src/plugins/remark-code-fences.ts';
+import { jsonSchema, vegaLite, graphviz, mermaid, jsonCanvas } from '../../../../src/formats/index.ts';
+import { yang } from '../../../../src/formats/yang.ts';
+import { plantuml } from '../../../../src/formats/plantuml.ts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const schemaSrc = JSON.stringify(
+  {
+    title: 'Participant',
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    type: 'object',
+    required: ['handle', 'name'],
+    properties: {
+      handle: { type: 'string' },
+      name: { type: 'string' },
+      kauffman_class: { type: ['integer', 'null'] },
+      status: { enum: ['active', 'alumni', 'prospective'] },
+      current_stack: { type: 'array', items: { $ref: '#/$defs/StackItem' } },
+    },
+    $defs: {
+      StackItem: {
+        type: 'object',
+        required: ['tool'],
+        properties: {
+          tool: { type: 'string' },
+          notes: { type: 'string', description: 'Why it earns its place.' },
+        },
+      },
+    },
+  },
+  null,
+  2,
+);
+
+const umlSrc = `participant Author
+participant LFM
+participant Renderer
+
+Author -> LFM: \`\`\`plantuml fence
+LFM -> LFM: deflate + base64
+LFM --> Renderer: data.fence.svg
+Renderer --> Author: <img src="...">`;
+
+const vlSrc = JSON.stringify(
+  {
+    title: 'Tools by stack count',
+    data: {
+      values: [
+        { tool: 'claude-code', n: 12 },
+        { tool: 'cursor', n: 7 },
+        { tool: 'windsurf', n: 5 },
+        { tool: 'ghostty', n: 4 },
+      ],
+    },
+    mark: 'bar',
+    encoding: {
+      y: { field: 'tool', type: 'nominal', sort: '-x', title: null },
+      x: { field: 'n', type: 'quantitative', title: 'stacks' },
+      color: { field: 'tool', type: 'nominal', legend: null },
+    },
+  },
+  null,
+  2,
+);
+
+const dotSrc = `digraph fences {
+  rankdir=LR;
+  fence -> remarkCodeFences -> handler -> "data.fence";
+}`;
+
+const fences = [
+  { lang: 'json-schema', src: schemaSrc },
+  { lang: 'plantuml', src: umlSrc },
+  { lang: 'vega-lite', src: vlSrc },
+  { lang: 'dot', src: dotSrc },
+];
+
+const markdown = fences.map((f) => '```' + f.lang + '\n' + f.src + '\n```').join('\n\n');
+
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkCodeFences, {
+    formats: [jsonSchema, plantuml, vegaLite, graphviz, yang, mermaid, jsonCanvas],
+  });
+const tree: any = await processor.run(processor.parse(markdown) as any);
+
+const claimed = tree.children
+  .filter((n: any) => n.type === 'code')
+  .map((n: any) => ({ lang: n.lang, src: n.value, fence: n.data?.fence }));
+
+const byFormat = (name: string) => claimed.find((c: any) => c.fence?.format === name);
+const schema = byFormat('json-schema');
+const uml = byFormat('plantuml');
+const vl = byFormat('vega-lite');
+const dot = byFormat('graphviz');
+---
+
+<BaseLayout
+  title="Code-fence formats · LFM"
+  description="Live gallery: JSON Schema, PlantUML, Vega-Lite and Graphviz fences parsed by @lossless-group/lfm."
+>
+  <article class="fmt">
+    <header>
+      <p class="eyebrow">Code-fence formats</p>
+      <h1>One registry, four very different jobs</h1>
+      <p class="lede">
+        <code>remarkCodeFences</code> ships knowing no formats. Each handler below
+        was registered explicitly. What they produce differs on purpose — some
+        parse to a tree, one produces a URL, one hands a spec to a client
+        renderer, one just claims the language.
+      </p>
+    </header>
+
+    <!-- ── JSON Schema ───────────────────────────────────────────── -->
+    <section>
+      <h2>JSON Schema <span class="tier">parses to a tree · zero dependencies</span></h2>
+      <p>
+        The same shape as YANG: everything happens at build time, nothing ships
+        to the browser. Local <code>$ref</code>s expand inline with cycle detection.
+      </p>
+      {schema?.fence?.parsed && <pre class="tree"><code>{schema.fence.parsed.tree}</code></pre>}
+      <details><summary>Source</summary><pre class="src"><code>{schema?.src}</code></pre></details>
+    </section>
+
+    <!-- ── PlantUML ──────────────────────────────────────────────── -->
+    <section>
+      <h2>PlantUML <span class="tier">encodes to a URL · no renderer, no Java</span></h2>
+      <p>
+        The full UML surface Mermaid doesn't cover. The handler deflates the
+        source and encodes it into a server URL, so the page is a plain
+        <code>&lt;img&gt;</code> — no client JavaScript at all.
+        {uml?.fence?.parsed?.kind && <> Detected kind: <code>{uml.fence.parsed.kind}</code>.</>}
+      </p>
+      {uml?.fence?.parsed && (
+        <>
+          <div class="uml-frame">
+            <img src={uml.fence.parsed.svg} alt={`PlantUML ${uml.fence.parsed.kind ?? ''} diagram`} loading="lazy" />
+          </div>
+          <p class="note">
+            Rendered by the public plantuml.com server, which means the diagram
+            source travels there in the URL. Self-host via
+            <code>createPlantUml(&#123; server &#125;)</code> for anything private.
+          </p>
+        </>
+      )}
+      <details><summary>Source</summary><pre class="src"><code>{uml?.src}</code></pre></details>
+    </section>
+
+    <!-- ── Vega-Lite ─────────────────────────────────────────────── -->
+    <section>
+      <h2>Vega-Lite <span class="tier">parses the spec · client renders the chart</span></h2>
+      <p>
+        Parsing is free (it's JSON) and yields a summary the page can use for
+        fallback and alt text — a chart that renders as nothing without JS
+        should still say what it meant to draw.
+      </p>
+      {vl?.fence?.parsed && (
+        <>
+          <dl class="meta">
+            <div><dt>mark</dt><dd>{vl.fence.parsed.mark}</dd></div>
+            <div><dt>channels</dt><dd>{vl.fence.parsed.channels.join(', ')}</dd></div>
+            <div><dt>data</dt><dd>{vl.fence.parsed.data}</dd></div>
+          </dl>
+          <figure class="chart">
+            <div id="vl-chart" data-spec={JSON.stringify(vl.fence.parsed.spec)}>
+              <noscript><p class="note">Chart requires JavaScript — {vl.fence.parsed.mark} chart of {vl.fence.parsed.data}.</p></noscript>
+            </div>
+          </figure>
+        </>
+      )}
+      <details><summary>Source</summary><pre class="src"><code>{vl?.src}</code></pre></details>
+    </section>
+
+    <!-- ── Graphviz ──────────────────────────────────────────────── -->
+    <section>
+      <h2>Graphviz <span class="tier">recognition only</span></h2>
+      <p>
+        DOT's whole value is the <em>layout</em> — the part that can't happen at
+        parse time. So the handler claims the language and stops; a site renders
+        it with <code>@viz-js/viz</code> (WASM, no server).
+      </p>
+      <p class="claim">
+        <code>data.fence.format</code> = <strong>{dot?.fence?.format ?? '—'}</strong>,
+        no <code>parsed</code> — exactly as intended.
+      </p>
+      <details><summary>Source</summary><pre class="src"><code>{dot?.src}</code></pre></details>
+    </section>
+  </article>
+</BaseLayout>
+
+<script>
+  // Vega-Lite is the one format here needing a client renderer. Loaded from a
+  // CDN and only on this page — deliberately not a site-wide dependency.
+  const mount = document.getElementById('vl-chart');
+  if (mount?.dataset.spec) {
+    const spec = JSON.parse(mount.dataset.spec);
+    const load = (src: string) =>
+      new Promise<void>((res, rej) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = () => res(); s.onerror = () => rej(new Error(src));
+        document.head.appendChild(s);
+      });
+    (async () => {
+      try {
+        await load('https://cdn.jsdelivr.net/npm/vega@5');
+        await load('https://cdn.jsdelivr.net/npm/vega-lite@5');
+        await load('https://cdn.jsdelivr.net/npm/vega-embed@6');
+        await (window as any).vegaEmbed(mount, spec, { actions: false, renderer: 'svg' });
+      } catch {
+        mount.innerHTML = '<p class="note">Chart renderer unavailable offline — the parsed summary above still describes it.</p>';
+      }
+    })();
+  }
+</script>
+
+<style>
+  .fmt { max-width: 62rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .eyebrow {
+    font-family: var(--font-code, ui-monospace, monospace);
+    font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+    opacity: 0.7; margin: 0 0 0.5rem;
+  }
+  .lede { font-size: 1.05rem; line-height: 1.65; opacity: 0.85; max-width: 48rem; }
+  .fmt section { margin: 3rem 0; padding-top: 1.5rem; border-top: 1px solid currentColor; }
+  .fmt h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; }
+  .tier {
+    font-family: var(--font-code, ui-monospace, monospace);
+    font-size: 0.7rem; font-weight: 400; text-transform: uppercase;
+    letter-spacing: 0.08em; opacity: 0.6;
+  }
+
+  /* Trees are whitespace-significant ASCII — never wrap them. */
+  .tree, .src {
+    font-family: var(--font-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.8rem; line-height: 1.55; padding: 1rem;
+    border: 1px solid currentColor; border-radius: 0.5rem;
+    overflow-x: auto; white-space: pre; font-variant-ligatures: none;
+  }
+  details { margin-top: 1rem; }
+  summary { cursor: pointer; font-size: 0.85rem; opacity: 0.7; }
+
+  .uml-frame {
+    padding: 1rem; border: 1px solid currentColor; border-radius: 0.5rem;
+    background: #fff; overflow-x: auto;
+  }
+  .uml-frame img { max-width: 100%; height: auto; display: block; }
+
+  .meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1rem 0; }
+  .meta dt {
+    font-family: var(--font-code, ui-monospace, monospace);
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6;
+  }
+  .meta dd { margin: 0.15rem 0 0; font-size: 0.9rem; }
+
+  .chart {
+    margin: 1rem 0; padding: 1rem; min-height: 8rem;
+    border: 1px solid currentColor; border-radius: 0.5rem; overflow-x: auto;
+  }
+  .note { font-size: 0.82rem; opacity: 0.7; line-height: 1.6; }
+  .claim { font-size: 0.9rem; }
+</style>

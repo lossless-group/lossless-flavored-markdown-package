@@ -1,0 +1,188 @@
+---
+// Live demo: a `yang` code fence rendered as its RFC 8340 tree diagram.
+//
+// Imports LFM's source directly rather than the published package — this is
+// the package's own splash, so dogfooding the working tree is the point. It
+// also means this page proves the current source works, not the last release.
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import { remarkCodeFences } from '../../../../src/plugins/remark-code-fences.ts';
+import { yang } from '../../../../src/formats/yang.ts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const source = `module lossless-fleet {
+  yang-version 1.1;
+  namespace "urn:lossless:params:xml:ns:yang:lossless-fleet";
+  prefix "flt";
+
+  organization "The Lossless Group";
+  description
+    "Model for the Astro Knots site fleet: which sites exist, "
+    + "what they publish, and their build state.";
+
+  revision 2026-08-08 {
+    description "Initial revision.";
+  }
+
+  grouping timestamps {
+    leaf created-at {
+      type string;   // ISO-8601
+      mandatory true;
+    }
+    leaf modified-at {
+      type string;
+    }
+  }
+
+  container fleet {
+    leaf name {
+      type string;
+      mandatory true;
+    }
+
+    leaf-list tag {
+      type string;
+    }
+
+    container registry {
+      presence "Registry is configured";
+      leaf endpoint { type string; }
+    }
+
+    list site {
+      key "slug";
+
+      leaf slug  { type string; mandatory true; }
+      leaf title { type string; }
+
+      uses timestamps;
+
+      choice hosting {
+        case vercel {
+          leaf project-id { type string; }
+        }
+        case self-hosted {
+          leaf host { type string; }
+          leaf port { type uint16; }
+        }
+      }
+
+      container build-state {
+        config false;
+        leaf last-status   { type enumeration; }
+        leaf last-duration { type uint32; }
+      }
+    }
+  }
+
+  rpc rebuild-site {
+    input {
+      leaf slug  { type string; mandatory true; }
+      leaf force { type boolean; }
+    }
+    output {
+      leaf job-id { type string; }
+    }
+  }
+
+  notification build-finished {
+    leaf slug { type string; }
+    leaf ok   { type boolean; }
+  }
+}`;
+
+const markdown = '```yang\n' + source + '\n```';
+
+const processor = unified().use(remarkParse).use(remarkCodeFences, { formats: [yang] });
+const tree: any = await processor.run(processor.parse(markdown) as any);
+
+const codeNode: any = tree.children.find((n: any) => n.type === 'code');
+const fence = codeNode?.data?.fence;
+const mod = fence?.parsed?.module;
+---
+
+<BaseLayout
+  title="YANG fences · LFM"
+  description="A yang code fence parsed by @lossless-group/lfm and rendered as its RFC 8340 tree diagram."
+>
+  <article class="yang-page">
+    <header>
+      <p class="eyebrow">Code-fence formats</p>
+      <h1>YANG renders as a tree</h1>
+      <p class="lede">
+        A <code>yang</code> fence is parsed at build time by
+        <code>remarkCodeFences</code> and the <code>yang</code> handler, then
+        rendered as the RFC&nbsp;8340 tree diagram — YANG's canonical visual
+        form. No dependencies: the RFC&nbsp;7950 grammar is regular enough to
+        tokenize by hand.
+      </p>
+    </header>
+
+    {fence?.error && (
+      <div class="yang-error">
+        <strong>Parse failed:</strong> {fence.error}
+        <p>The fence falls back to source rather than failing the build.</p>
+      </div>
+    )}
+
+    {mod && (
+      <section>
+        <dl class="yang-meta">
+          <div><dt>module</dt><dd>{mod.name}</dd></div>
+          {mod.namespace && <div><dt>namespace</dt><dd>{mod.namespace}</dd></div>}
+          {mod.prefix && <div><dt>prefix</dt><dd>{mod.prefix}</dd></div>}
+          {mod.revision && <div><dt>revision</dt><dd>{mod.revision}</dd></div>}
+        </dl>
+
+        <h2>Rendered tree</h2>
+        <pre class="yang-tree"><code>{fence.parsed.tree}</code></pre>
+
+        <p class="yang-legend">
+          <code>rw</code> config · <code>ro</code> state · <code>x</code> rpc ·
+          <code>n</code> notification · <code>?</code> optional ·
+          <code>*</code> multiple · <code>!</code> presence ·
+          <code>[key]</code> list key
+        </p>
+      </section>
+    )}
+
+    <h2>Source</h2>
+    <pre class="yang-source"><code>{source}</code></pre>
+  </article>
+</BaseLayout>
+
+<style>
+  .yang-page { max-width: 60rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .eyebrow {
+    font-family: var(--font-code, ui-monospace, monospace);
+    font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+    opacity: 0.7; margin: 0 0 0.5rem;
+  }
+  .lede { font-size: 1.05rem; line-height: 1.65; opacity: 0.85; max-width: 46rem; }
+
+  .yang-meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 0.75rem; margin: 1.5rem 0; padding: 1rem;
+    border: 1px solid currentColor; border-radius: 0.5rem; opacity: 0.9;
+  }
+  .yang-meta dt {
+    font-family: var(--font-code, ui-monospace, monospace);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6;
+  }
+  .yang-meta dd { margin: 0.15rem 0 0; font-size: 0.9rem; word-break: break-all; }
+
+  /* The tree is whitespace-significant ASCII art — it must never wrap. */
+  .yang-tree, .yang-source {
+    font-family: var(--font-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.82rem; line-height: 1.55;
+    padding: 1rem; border-radius: 0.5rem;
+    border: 1px solid currentColor;
+    overflow-x: auto; white-space: pre;
+  }
+  .yang-tree { font-variant-ligatures: none; }
+  .yang-legend { font-size: 0.8rem; opacity: 0.7; line-height: 1.9; }
+  .yang-error {
+    padding: 1rem; border-radius: 0.5rem; margin: 1.5rem 0;
+    border: 1px solid currentColor;
+  }
+</style>

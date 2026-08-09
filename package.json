@@ -1,6 +1,6 @@
 {
   "name": "@lossless-group/lfm",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Lossless Flavored Markdown \u2014 a polyglot extended markdown pipeline for remark/rehype",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,6 +14,22 @@
     "./types": {
       "import": "./dist/types/index.js",
       "types": "./dist/types/index.d.ts"
+    },
+    "./formats": {
+      "import": "./dist/formats/index.js",
+      "types": "./dist/formats/index.d.ts"
+    },
+    "./formats/yang": {
+      "import": "./dist/formats/yang.js",
+      "types": "./dist/formats/yang.d.ts"
+    },
+    "./formats/json-schema": {
+      "import": "./dist/formats/json-schema.js",
+      "types": "./dist/formats/json-schema.d.ts"
+    },
+    "./formats/plantuml": {
+      "import": "./dist/formats/plantuml.js",
+      "types": "./dist/formats/plantuml.d.ts"
     }
   },
   "files": [
@@ -60,5 +76,6 @@
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
-  }
+  },
+  "sideEffects": false
 }

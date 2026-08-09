@@ -81,8 +81,49 @@ export interface RemarkLfmOptions {
    * leave `[[...]]` syntax as plain markdown text.
    */
   wikilinks?: WikilinkOptions | false;
+  /**
+   * Code-fence format handlers. Opt-in and empty by default — LFM ships no
+   * fence knowledge, you register exactly the formats you want:
+   * `codeFences: { formats: [mermaid, yang] }`.
+   */
+  codeFences?: RemarkCodeFencesOptions;
   /** Build-time Open Graph fetch options. Disabled when omitted. */
   ogFetch?: OGFetchOptions;
+}
+
+/**
+ * A code-fence format handler.
+ *
+ * Plain data plus an optional pure function, so a handler can be authored and
+ * published by anyone without coordinating with this package. Omit `parse` to
+ * merely claim a language so a renderer can dispatch on it.
+ */
+export interface FenceFormat<T = unknown> {
+  /** Identifier stamped onto `data.fence.format`. */
+  name: string;
+  /** Fence languages this handler claims. Matched case-insensitively. */
+  match: string[];
+  /** Turn the raw fence body into structured data. Throwing is safe — the
+   *  plugin records the message and the renderer falls back to source. */
+  parse?: (raw: string) => T;
+}
+
+/** Stamped onto a `code` node's `data.fence` when a handler claims it. */
+export interface FenceData<T = unknown> {
+  /** The handler's `name`. */
+  format: string;
+  /** Present when the handler supplied a `parse` and it succeeded. */
+  parsed?: T;
+  /** Present when `parse` threw. `parsed` will be absent. */
+  error?: string;
+}
+
+/**
+ * Options for the remarkCodeFences plugin.
+ */
+export interface RemarkCodeFencesOptions {
+  /** Handlers to register. Ships empty — you pay for what you name. */
+  formats?: FenceFormat[];
 }
 
 /**

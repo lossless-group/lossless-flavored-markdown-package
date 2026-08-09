@@ -19,6 +19,7 @@ import remarkDirective from 'remark-directive';
 import { remarkCallouts } from './plugins/remark-callouts.js';
 import { remarkCitations } from './plugins/remark-citations.js';
 import { remarkHeadingIds } from './plugins/remark-heading-ids.js';
+import { remarkCodeFences } from './plugins/remark-code-fences.js';
 import { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
 import { remarkOgFetcher } from './plugins/og-fetcher.js';
 import { remarkLinkPreview } from './plugins/remark-link-preview.js';
@@ -81,6 +82,14 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
       remarkHeadingIds,
       opts.headingIds === true || opts.headingIds === undefined ? undefined : opts.headingIds,
     );
+  }
+
+  // Code fences: opt-in only, and inert without registered formats. Kept out
+  // of the defaults deliberately — a splash page shouldn't carry diagram
+  // knowledge it never uses. Use `.use(remarkCodeFences, …)` directly for the
+  // leanest bundle; this is the convenience path.
+  if (opts.codeFences?.formats?.length) {
+    processor.use(remarkCodeFences, opts.codeFences);
   }
 
   // Wikilinks: opt-in only — destinations are per-site, so a resolver is

@@ -74,7 +74,7 @@ interface LocalLoaderOptions {
 function localLoader(options: LocalLoaderOptions) {
   return {
     name: `local-loader:${options.collectionName}`,
-    load: async ({ store, parseData, logger }: any): Promise<void> => {
+    load: async ({ store, parseData, logger, renderMarkdown }: any): Promise<void> => {
       store.clear();
 
       let loaded = 0;
@@ -97,7 +97,11 @@ function localLoader(options: LocalLoaderOptions) {
 
           const id = idBase;
           const parsed = await safeParse({ id, data: merged }, parseData, logger);
-          store.set({ id, data: parsed, body });
+          // `rendered` is what render(entry) returns as <Content />. Without it
+          // every changelog and context-v page shipped title + lede + metadata
+          // and no body at all — on the live site, not just locally.
+          const rendered = await renderMarkdown(body);
+          store.set({ id, data: parsed, body, rendered });
           loaded++;
         }
       } catch (err) {

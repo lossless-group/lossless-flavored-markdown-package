@@ -37,6 +37,10 @@ export { remarkCallouts } from './plugins/remark-callouts.js';
 /** Citation processor — hex-code renumbering, structured definition parsing. */
 export { remarkCitations } from './plugins/remark-citations.js';
 
+/** Code-fence router — annotates fences with a resolved format handler.
+ *  Ships with an empty registry; you pay for the formats you name. */
+export { remarkCodeFences } from './plugins/remark-code-fences.js';
+
 /** Heading anchor ids + document outline — stamps `data.id` on every heading
  *  and attaches `tree.data.headings`. A fragment URL is a public contract;
  *  this is the one place that decides what it says. */
@@ -86,6 +90,12 @@ export type {
   RemarkLfmOptions,
   /** Options for the remarkHeadingIds plugin. */
   RemarkHeadingIdsOptions,
+  /** Options for the remarkCodeFences plugin. */
+  RemarkCodeFencesOptions,
+  /** A code-fence format handler. */
+  FenceFormat,
+  /** Stamped onto a claimed `code` node's `data.fence`. */
+  FenceData,
   /** One entry in the `tree.data.headings` outline. */
   LfmHeading,
   /** Input passed to a wikilink resolver function. */
