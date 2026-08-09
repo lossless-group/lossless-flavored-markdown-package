@@ -37,6 +37,11 @@ export { remarkCallouts } from './plugins/remark-callouts.js';
 /** Citation processor — hex-code renumbering, structured definition parsing. */
 export { remarkCitations } from './plugins/remark-citations.js';
 
+/** Heading anchor ids + document outline — stamps `data.id` on every heading
+ *  and attaches `tree.data.headings`. A fragment URL is a public contract;
+ *  this is the one place that decides what it says. */
+export { remarkHeadingIds, slugifyHeading } from './plugins/remark-heading-ids.js';
+
 /** Obsidian wikilink resolver — site-configured internal/external path mapping
  *  for `[[Page]]`, `[[Page|Display]]`, `[[folder/Page#Section|Display]]`. */
 export { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
@@ -79,6 +84,10 @@ export type {
   LfmCalloutNode,
   /** Options for the remarkLfm preset. */
   RemarkLfmOptions,
+  /** Options for the remarkHeadingIds plugin. */
+  RemarkHeadingIdsOptions,
+  /** One entry in the `tree.data.headings` outline. */
+  LfmHeading,
   /** Input passed to a wikilink resolver function. */
   WikilinkResolverInput,
   /** Resolution returned by a wikilink resolver function. */

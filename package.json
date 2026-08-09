@@ -1,7 +1,7 @@
 {
   "name": "@lossless-group/lfm",
-  "version": "0.3.0",
-  "description": "Lossless Flavored Markdown — a polyglot extended markdown pipeline for remark/rehype",
+  "version": "0.4.0",
+  "description": "Lossless Flavored Markdown \u2014 a polyglot extended markdown pipeline for remark/rehype",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

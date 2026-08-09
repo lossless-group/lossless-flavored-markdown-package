@@ -127,12 +127,13 @@ import { remarkCallouts } from '@lossless-group/lfm';
 | remark-gfm | Tables, task lists, strikethrough, autolinks |
 | remark-directive | `:::name{}` directive syntax parsing |
 | remark-callouts | Obsidian `> [!type] Title` → directive normalization |
+| remark-heading-ids | Stable, unique anchor id on every heading (`data.id`) + a document outline at `tree.data.headings`. One definition of what a fragment URL says, shared by every site. |
 | remark-citations | Hex-code footnote renumbering + structured citation extraction |
 | remark-lossless-wikilinks | Obsidian `[[Page]]` / `[[folder/Page#Section\|Display]]` → resolved `link` MDAST nodes via a site-supplied resolver. Internal vs external destinations are a per-site decision the package never bakes in. |
 | remark-link-preview | `:::link-preview` / `:::link-rollup` directives → annotated AST nodes carrying `data.linkPreviewSpec` (the format taxonomy a renderer dispatches on) |
 | remark-og-fetcher | Build-time OpenGraph fetcher that enriches link nodes with `LinkPreviewData` (cache-backed, configurable backend) |
 
-The `remarkLfm` preset chains the first four together. All features enabled by default. `remarkOgFetcher` is opt-in (`enabled: true`) because it makes network calls; see **OG fetching** below.
+The `remarkLfm` preset chains the first five together. All features enabled by default. `remarkOgFetcher` is opt-in (`enabled: true`) because it makes network calls; see **OG fetching** below.
 
 The plugins above are the **triggers** in [the STC paradigm](#the-stc-paradigm) — each one matches its own family of authoring syntaxes and normalizes them into one canonical MDAST shape. Adding a syntax is adding a normalizer plugin; consumers don't change.
 
@@ -146,6 +147,7 @@ const tree = await parseMarkdown(content, {
   directives: true,  // Directive syntax (default: true)
   callouts: true,    // Obsidian callout normalization (default: true)
   citations: true,   // Hex-code footnote renumbering (default: true)
+  headingIds: true,  // Heading anchor ids + outline (default: true)
   // wikilinks: { resolver: ... }   // see Wikilinks section below — opt-in
 });
 ```

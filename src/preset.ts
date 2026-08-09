@@ -18,6 +18,7 @@ import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import { remarkCallouts } from './plugins/remark-callouts.js';
 import { remarkCitations } from './plugins/remark-citations.js';
+import { remarkHeadingIds } from './plugins/remark-heading-ids.js';
 import { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
 import { remarkOgFetcher } from './plugins/og-fetcher.js';
 import { remarkLinkPreview } from './plugins/remark-link-preview.js';
@@ -47,6 +48,7 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
     directives: true,
     callouts: true,
     citations: true,
+    headingIds: true,
     ...options,
   } satisfies RemarkLfmOptions;
 
@@ -67,6 +69,18 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // Citations must come after gfm (which creates footnote nodes).
   if (opts.citations) {
     processor.use(remarkCitations as Plugin);
+  }
+
+  // Heading ids run before anything that might rewrite heading children, so
+  // the slug is computed from the text as authored. Enabled by default: an id
+  // on a heading breaks nothing, and without it each site recomputes slugs
+  // itself and they drift apart (see
+  // context-v/Maintain-Heading-Anchors-and-Share-Links.md).
+  if (opts.headingIds !== false) {
+    processor.use(
+      remarkHeadingIds,
+      opts.headingIds === true || opts.headingIds === undefined ? undefined : opts.headingIds,
+    );
   }
 
   // Wikilinks: opt-in only — destinations are per-site, so a resolver is

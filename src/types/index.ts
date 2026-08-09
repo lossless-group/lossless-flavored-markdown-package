@@ -68,6 +68,13 @@ export interface RemarkLfmOptions {
   /** Enable citation processing (hex-code renumbering, structured definitions). Default: true */
   citations?: boolean;
   /**
+   * Assign unique anchor ids to headings and attach a `data.headings` outline.
+   * Default: true — an id on a heading breaks nothing, and without it every
+   * consuming site recomputes slugs itself and they drift apart.
+   * Pass `false` to opt out, or an options object to override the slugifier.
+   */
+  headingIds?: RemarkHeadingIdsOptions | boolean;
+  /**
    * Enable Obsidian wikilink resolution. Disabled by default — wikilink
    * destinations are inherently per-site, so consumers must supply a
    * `resolver` function via `WikilinkOptions`. Omit (or pass `false`) to
@@ -76,6 +83,43 @@ export interface RemarkLfmOptions {
   wikilinks?: WikilinkOptions | false;
   /** Build-time Open Graph fetch options. Disabled when omitted. */
   ogFetch?: OGFetchOptions;
+}
+
+/**
+ * Options for the remarkHeadingIds plugin.
+ */
+export interface RemarkHeadingIdsOptions {
+  /**
+   * Override the slug function. The default is bug-for-bug compatible with
+   * `lossless-monorepo/site`'s `utils/slugify.ts` — the algorithm that has
+   * published share links in the wild.
+   */
+  slugify?: (text: string) => string;
+  /**
+   * Append `-2`, `-3`… to colliding ids. Default: true. Disabling it
+   * reintroduces unreachable headings; it exists only as an escape hatch.
+   */
+  dedupe?: boolean;
+  /** Prefix for ids synthesized when a heading slugifies to nothing. Default: `heading` */
+  syntheticPrefix?: string;
+}
+
+/**
+ * One entry in the document outline attached at `tree.data.headings`.
+ * Ordered as the headings appear in the document — render it directly as a
+ * table of contents.
+ */
+export interface LfmHeading {
+  /** Final anchor id, after dedupe. Matches the heading node's `data.id`. */
+  id: string;
+  /** Plain text of the heading, markup stripped. */
+  text: string;
+  /** Heading level, 1–6. */
+  depth: 1 | 2 | 3 | 4 | 5 | 6;
+  /** Set when this heading's slug collided with an earlier one. Diagnostics. */
+  duplicateOf?: string;
+  /** True when the text slugified to nothing and a positional id was used. */
+  synthetic?: boolean;
 }
 
 /**
