@@ -24,7 +24,10 @@
   ],
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "lfm:gh": "pnpm build && npm publish --registry=https://npm.pkg.github.com \"--//npm.pkg.github.com/:_authToken=$(gh auth token)\"",
+    "lfm:jsr": "pnpx jsr publish",
+    "lfm:publish": "pnpm lfm:gh && pnpm lfm:jsr"
   },
   "dependencies": {
     "remark-directive": "^3.0.0",
