@@ -8,24 +8,12 @@ tags: [Code-Fences, Diagrams, YANG]
 ---
 
 Diagram fences normally mean a routing table inside somebody's renderer, edited
-once per format and reimplemented once per site. This inverts that: the plugin
+once per format and reimplemented once per site. This inverts it: the plugin
 knows no formats at all, and a handler is plain data plus an optional pure
-function — so anyone can author one without coordinating with the package.
+function.
 
-```ts
-import { remarkCodeFences } from '@lossless-group/lfm';
-import { yang } from '@lossless-group/lfm/formats/yang';
+Seven ship, none adding a dependency — `yang` and `jsonSchema` render as trees,
+`plantuml` encodes to a server URL with no renderer at all, `vegaLite` parses
+for a client chart, `mermaid` and `graphviz` just claim their language.
 
-unified().use(remarkParse).use(remarkCodeFences, { formats: [yang] });
-```
-
-Three zero-dependency handlers ship: **`yang`** parses RFC 7950 and renders the
-RFC 8340 tree diagram; **`mermaid`** claims the language and stops, because
-mermaid.js is a client-side renderer; **`jsonCanvas`** parses and normalizes
-`nodes`/`edges`.
-
-The `code` node is annotated rather than replaced — `data.fence` carries the
-format and any parsed result — so a renderer that doesn't recognize a format
-degrades to a readable code block instead of a blob of foreign HTML.
-
-[See a YANG module rendered as a tree →](/lossless-flavored-markdown-package/formats/yang)
+[See them rendered →](/lossless-flavored-markdown-package/formats)

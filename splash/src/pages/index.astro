@@ -6,8 +6,30 @@ import StcDiagram from '@components/StcDiagram.astro';
 import FeatureCard from '@components/FeatureCard.astro';
 import { STATIC_SEO } from '@lib/seo';
 import { formatDate, toDate } from '@lib/date';
+import { mermaid, jsonCanvas, graphviz, vegaLite, jsonSchema } from '../../../src/formats/index.ts';
+import { yang } from '../../../src/formats/yang.ts';
+import { plantuml } from '../../../src/formats/plantuml.ts';
 
 // ─── Curated content ──────────────────────────────────────────────────────
+
+// Fence handlers, read straight off the exports so the language lists can
+// never drift from the code. The prose is the only hand-written part.
+const FENCE_NOTES: Record<string, { produces: string; draws: string }> = {
+  yang:          { produces: 'RFC 8340 tree diagram',      draws: 'nobody — it renders as text' },
+  'json-schema': { produces: 'schema tree, $refs expanded', draws: 'nobody — it renders as text' },
+  plantuml:      { produces: 'server URL',                  draws: 'a PlantUML server, via <img>' },
+  'vega-lite':   { produces: 'spec + mark/channels summary', draws: 'vega-embed, client-side' },
+  mermaid:       { produces: 'claims the language',         draws: 'mermaid.js, client-side' },
+  graphviz:      { produces: 'claims the language',         draws: '@viz-js/viz (WASM)' },
+  jsoncanvas:    { produces: 'normalized nodes + edges',    draws: 'your canvas renderer' },
+};
+
+const fenceHandlers = [yang, jsonSchema, plantuml, vegaLite, mermaid, graphviz, jsonCanvas].map((f) => ({
+  name: f.name,
+  langs: f.match,
+  parses: typeof f.parse === 'function',
+  ...(FENCE_NOTES[f.name] ?? { produces: '—', draws: '—' }),
+}));
 
 const stcExamples = await getCollection('stc-examples');
 const featuredExample =
@@ -108,13 +130,54 @@ const base = import.meta.env.BASE_URL;
     </div>
   </section>
 
+
+  <!-- ───────────────────── FENCE FORMATS ───────────────────── -->
+  <section id="formats" class="formats">
+    <div class="container">
+      <header class="section-header">
+        <p class="folio" data-num="§ 2">Code-fence formats</p>
+        <h2>Diagrams, schemas and UML — from a registry that ships empty</h2>
+        <p class="section-lede">
+          <code>remarkCodeFences</code> knows no formats until you name them.
+          Seven handlers are included and <strong>none add a dependency</strong>,
+          because "support a diagram language" means three different things
+          depending on who does the drawing.
+        </p>
+      </header>
+
+      <div class="formats__table" role="table" aria-label="Included fence handlers">
+        <div class="formats__row formats__row--head" role="row">
+          <span role="columnheader">Handler</span>
+          <span role="columnheader">Fences</span>
+          <span role="columnheader">Produces</span>
+          <span role="columnheader">Who draws it</span>
+        </div>
+        {fenceHandlers.map((h) => (
+          <div class="formats__row" role="row">
+            <span role="cell"><code>{h.name}</code></span>
+            <span role="cell" class="formats__langs">
+              {h.langs.map((l) => <code>{l}</code>)}
+            </span>
+            <span role="cell" data-parses={h.parses}>{h.produces}</span>
+            <span role="cell" class="formats__draws">{h.draws}</span>
+          </div>
+        ))}
+      </div>
+
+      <p class="formats__cta">
+        <a class="btn btn-primary" href={`${import.meta.env.BASE_URL}formats`}>See them rendered →</a>
+        <a class="btn" href={`${import.meta.env.BASE_URL}formats/yang`}>YANG in depth</a>
+      </p>
+    </div>
+  </section>
+
   <!-- ───────────────────── CHANGELOG TEASER ───────────────────── -->
   {
     changelog.length > 0 && (
       <section class="recent">
         <div class="container">
           <header class="section-header">
-            <p class="folio" data-num="§ 2">Recent</p>
+            <p class="folio" data-num="§ 3">Recent</p>
             <h2>What shipped lately</h2>
           </header>
           <ul class="recent__list" data-pagefind-ignore="all">
@@ -275,10 +338,23 @@ const base = import.meta.env.BASE_URL;
     padding: var(--space-16) 0;
     border-top: 1px solid var(--color-border);
   }
+  /* Masonry. CSS grid gives every card in a row the height of the tallest,
+     so one long card stretches its whole row and leaves dead space beside the
+     short ones. CSS columns pack by height instead.
+     Trade-off: columns flow top-to-bottom per column, so reading order is
+     column-major rather than left-to-right — fine for a gallery. */
   .features__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-5);
+    columns: 3 300px;
+    column-gap: var(--space-5);
+  }
+
+  .features__grid > :global(*) {
+    /* Without this a card can be split across a column boundary. */
+    break-inside: avoid;
+    /* `break-inside` alone is ignored by some engines unless the item is a
+       block-level box in the column flow. */
+    display: block;
+    margin-bottom: var(--space-5);
   }
 
   /* ─── Recent ─── */
@@ -338,6 +414,45 @@ const base = import.meta.env.BASE_URL;
     margin-top: var(--space-6);
     font-family: var(--font__mono);
     font-size: 0.9rem;
+  }
+
+  /* ── Fence formats ─────────────────────────────────────────── */
+  .formats__table {
+    display: grid;
+    border: 1px solid var(--rule, currentColor);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-top: 2rem;
+  }
+  .formats__row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.8fr) minmax(9rem, 1fr) minmax(11rem, 1.2fr) minmax(11rem, 1.2fr);
+    gap: 1rem;
+    padding: 0.7rem 1rem;
+    align-items: baseline;
+    font-size: 0.875rem;
+    border-top: 1px solid var(--rule, currentColor);
+  }
+  .formats__row:first-child { border-top: 0; }
+  .formats__row--head {
+    font-family: var(--font-code, ui-monospace, monospace);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    opacity: 0.6;
+  }
+  .formats__langs { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .formats__langs code { font-size: 0.78rem; }
+  /* Handlers that only claim a language read as quieter than those that parse. */
+  .formats__row [data-parses='false'] { opacity: 0.62; font-style: italic; }
+  .formats__draws { opacity: 0.75; }
+  .formats__cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+
+  /* Table columns collapse to stacked rows well before they'd squeeze. */
+  @media (max-width: 46rem) {
+    .formats__row { grid-template-columns: 1fr; gap: 0.25rem; padding: 0.9rem 1rem; }
+    .formats__row--head { display: none; }
+    .formats__row span[role='cell']:first-child { font-weight: 600; }
   }
 </style>
 

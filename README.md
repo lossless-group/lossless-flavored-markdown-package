@@ -130,10 +130,11 @@ import { remarkCallouts } from '@lossless-group/lfm';
 | remark-heading-ids | Stable, unique anchor id on every heading (`data.id`) + a document outline at `tree.data.headings`. One definition of what a fragment URL says, shared by every site. |
 | remark-citations | Hex-code footnote renumbering + structured citation extraction |
 | remark-lossless-wikilinks | Obsidian `[[Page]]` / `[[folder/Page#Section\|Display]]` → resolved `link` MDAST nodes via a site-supplied resolver. Internal vs external destinations are a per-site decision the package never bakes in. |
+| remark-code-fences | Routes fenced code blocks to format handlers, stamping `data.fence`. Ships with an **empty** registry — you name the formats you want. Seven handlers included, none adding a dependency. |
 | remark-link-preview | `:::link-preview` / `:::link-rollup` directives → annotated AST nodes carrying `data.linkPreviewSpec` (the format taxonomy a renderer dispatches on) |
 | remark-og-fetcher | Build-time OpenGraph fetcher that enriches link nodes with `LinkPreviewData` (cache-backed, configurable backend) |
 
-The `remarkLfm` preset chains the first five together. All features enabled by default. `remarkOgFetcher` is opt-in (`enabled: true`) because it makes network calls; see **OG fetching** below.
+The `remarkLfm` preset enables **gfm, directives, callouts, citations and heading-ids** by default. Three are opt-in because each needs something from you: `remark-code-fences` needs formats registered, `remark-lossless-wikilinks` needs a resolver, and `remark-og-fetcher` needs `enabled: true` because it makes network calls.
 
 The plugins above are the **triggers** in [the STC paradigm](#the-stc-paradigm) — each one matches its own family of authoring syntaxes and normalizes them into one canonical MDAST shape. Adding a syntax is adding a normalizer plugin; consumers don't change.
 
@@ -148,7 +149,8 @@ const tree = await parseMarkdown(content, {
   callouts: true,    // Obsidian callout normalization (default: true)
   citations: true,   // Hex-code footnote renumbering (default: true)
   headingIds: true,  // Heading anchor ids + outline (default: true)
-  // wikilinks: { resolver: ... }   // see Wikilinks section below — opt-in
+  // codeFences: { formats: [yang, plantuml] }  // see Code-fence formats — opt-in
+  // wikilinks: { resolver: ... }               // see Wikilinks — opt-in
 });
 ```
 
@@ -292,6 +294,112 @@ const resolver = (input: WikilinkResolverInput): WikilinkResolution | null => {
 
 Adding a destination is then six lines in the rule array. The reference implementation in `mpstaton-site` adds two more rule shapes (`ExactRule` for one-off overrides, `DeferredRule` for "deliberately parked, don't keep showing up as untouched"). Both are optional.
 
+## Code-fence formats (diagrams, schemas, UML)
+
+A fenced code block is a natural place to author a diagram, and every project ends up hand-wiring a routing table inside its renderer to handle `mermaid`. `remark-code-fences` replaces that table with a registry that **ships empty** — it knows no formats until you name them, so a splash page never carries diagram knowledge it doesn't use.
+
+### Quick start
+
+```ts
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import { remarkCodeFences } from '@lossless-group/lfm';
+import { yang } from '@lossless-group/lfm/formats/yang';
+import { mermaid, jsonSchema } from '@lossless-group/lfm/formats';
+
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkCodeFences, { formats: [yang, jsonSchema, mermaid] });
+```
+
+Or through the preset:
+
+```ts
+await parseMarkdown(content, { codeFences: { formats: [yang, mermaid] } });
+```
+
+The plugin **annotates** the `code` node rather than replacing it:
+
+```ts
+node.data.fence = {
+  format: 'yang',      // the handler's name
+  parsed: { … },       // present when the handler supplied a `parse`
+  error: 'why it failed',  // present instead of `parsed` when `parse` threw
+};
+```
+
+That matters: a renderer that doesn't recognize a format still has a normal code block to fall back on, and a malformed diagram records an error instead of failing your build.
+
+### Included handlers
+
+None are registered by default. Import what you want.
+
+| Handler | Fence languages | Produces | Who draws it |
+|---|---|---|---|
+| `yang` | `yang` | RFC 8340 tree diagram | nobody — it's text |
+| `jsonSchema` | `json-schema` | schema tree, `$ref`s expanded | nobody — it's text |
+| `plantuml` | `plantuml`, `puml`, `uml` | server URLs (`svg`, `png`, `editor`) | a PlantUML server, via `<img>` |
+| `vegaLite` | `vega-lite`, `vl` | spec + `{ mark, channels, data }` | vega-embed, client-side |
+| `mermaid` | `mermaid` | nothing — claims the language | mermaid.js, client-side |
+| `graphviz` | `graphviz`, `dot` | nothing — claims the language | `@viz-js/viz` (WASM) |
+| `jsonCanvas` | `jsoncanvas`, `canvas` | normalized `{ nodes, edges }` | your canvas renderer |
+
+**None of them add a dependency.** "Supporting a diagram language" means three different things depending on who does the drawing, and the handlers are honest about which one applies.
+
+### YANG and JSON Schema render as text
+
+Both parse to a tree, so nothing ships to the browser:
+
+````markdown
+```yang
+module acme { container system { leaf host-name { type string; } } }
+```
+````
+
+```
+module: acme
+  +--rw system
+     +--rw host-name?   string
+```
+
+YANG handles the real RFC 7950 grammar — `mandatory true` suppresses the `?`, `leaf-list` takes `*`, `presence` takes `!`, list keys render as `[key]`, `config false` propagates `ro` to every descendant, `uses` expands groupings inline, and rpc/notification get `x`/`n`. JSON Schema expands local `$ref`s with cycle detection.
+
+### PlantUML needs no renderer
+
+PlantUML covers the full UML surface Mermaid doesn't — class, activity, component, deployment, use-case — and rendering it usually means running Java. It doesn't have to. A PlantUML server accepts the source deflated and encoded into the URL path, and `node:zlib` is a runtime builtin:
+
+```ts
+const { svg, png, editor, kind } = node.data.fence.parsed;
+// <img src={svg} alt={`PlantUML ${kind} diagram`} />
+```
+
+No client JavaScript, no package. Bare source is auto-wrapped in `@startuml`/`@enduml`.
+
+> **The default server is the public plantuml.com instance, which means your diagram source travels to a third party inside the URL.** Fine for public docs; for anything else, self-host:
+>
+> ```ts
+> import { createPlantUml } from '@lossless-group/lfm/formats/plantuml';
+> const plantuml = createPlantUml({ server: 'https://uml.internal.example' });
+> ```
+
+`plantuml` is deliberately **not** re-exported from `/formats` — it imports a node builtin, and pulling that into the barrel would make it unusable in a browser. Import it by subpath.
+
+### Writing your own handler
+
+A handler is plain data plus an optional pure function, so you can publish one without coordinating with this package:
+
+```ts
+import type { FenceFormat } from '@lossless-group/lfm/types';
+
+export const abc: FenceFormat<AbcTune> = {
+  name: 'abc',
+  match: ['abc', 'abc-notation'],
+  parse: (raw) => parseAbc(raw),   // omit to merely claim the language
+};
+```
+
+Throwing from `parse` is safe — the message lands on `data.fence.error` and the renderer falls back to source.
+
 ## OG fetching (build-time)
 
 `remarkOgFetcher` walks the tree, finds external links and link-preview directives, fetches their OpenGraph metadata via a configurable backend, and annotates the AST with `LinkPreviewData`. Runs at parse time so renderers have everything they need with no client-side round-trip — popovers and previews appear instantly on hover.
@@ -388,12 +496,13 @@ import type {
 
 Shipped at 0.2.x — directives, callouts, citations, link-preview annotation, OG fetching, the bare-link catalog.
 
+Shipped at 0.4.x — heading anchor ids + document outline (`remark-heading-ids`), and code-fence format routing (`remark-code-fences`, which closes the old *remark-code-components* roadmap item).
+
 ### Incremental — extending the trigger catalog
 
 - **remark-bare-link** — the parse-time plugin that consumes the bundled catalog and emits leaf directives (sites currently classify at render time)
 - **remark-backlinks** — `[[wikilink]]` resolution
 - **remark-toc** — auto-generated table of contents
-- **remark-code-components** — code fence identifiers → component routing (mermaid, etc.)
 
 ### Paradigm-completing — broader polyglot reach
 
