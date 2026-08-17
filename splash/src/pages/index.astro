@@ -43,8 +43,8 @@ const features = (await getCollection('feature-highlights')).sort(byOrder);
 const changelog = (await getCollection('changelog'))
   .filter((e) => e.data.publish !== false)
   .sort((a, b) => {
-    const da = toDate(a.data.date_modified ?? a.data.date_first_published ?? a.data.date_created ?? a.data.date);
-    const db = toDate(b.data.date_modified ?? b.data.date_first_published ?? b.data.date_created ?? b.data.date);
+    const da = toDate(a.data.date_modified ?? a.data.date_first_published ?? a.data.date_created ?? a.data.date ?? a.data.date_authored_current_draft ?? a.data.date_authored_initial_draft);
+    const db = toDate(b.data.date_modified ?? b.data.date_first_published ?? b.data.date_created ?? b.data.date ?? b.data.date_authored_current_draft ?? b.data.date_authored_initial_draft);
     const ta = da ? da.getTime() : 0;
     const tb = db ? db.getTime() : 0;
     if (tb !== ta) return tb - ta;
@@ -182,7 +182,7 @@ const base = import.meta.env.BASE_URL;
           </header>
           <ul class="recent__list" data-pagefind-ignore="all">
             {changelog.map((entry) => {
-              const d = toDate(entry.data.date_modified ?? entry.data.date_first_published ?? entry.data.date_created ?? entry.data.date);
+              const d = toDate(entry.data.date_modified ?? entry.data.date_first_published ?? entry.data.date_created ?? entry.data.date ?? entry.data.date_authored_current_draft ?? entry.data.date_authored_initial_draft);
               return (
                 <li class="recent__item">
                   <a href={`${base}changelog/${entry.id}/`}>
