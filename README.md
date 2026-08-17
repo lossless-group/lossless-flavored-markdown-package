@@ -22,9 +22,9 @@ flowchart LR
     end
 
     subgraph TRG["02 · Trigger — LFM ships"]
-        T1["remark-callouts"]
-        T2["remark-link-preview"]
-        T3["remark-citations"]
+        T1["remark-lfm-callouts"]
+        T2["lfm-link-preview"]
+        T3["remark-lfm-citations"]
     end
 
     subgraph CMP["03 · Component — your renderer"]
@@ -42,7 +42,7 @@ flowchart LR
     T3 --> C3
 ```
 
-The polyglot point: **the two arrows landing on `remark-callouts`.** A directive callout and an Obsidian callout block produce the *same* MDAST node, so your `<Callout>` component renders one shape regardless of which authoring tool wrote the file. Adding a new authoring syntax means a new normalizer plugin — no consumer changes, no renderer rewrites.
+The polyglot point: **the two arrows landing on `remark-lfm-callouts`.** A directive callout and an Obsidian callout block produce the *same* MDAST node, so your `<Callout>` component renders one shape regardless of which authoring tool wrote the file. Adding a new authoring syntax means a new normalizer plugin — no consumer changes, no renderer rewrites.
 
 This package owns stages 01 + 02 (and the matching catalog at stage 01). The component renderer is yours.
 
@@ -117,7 +117,7 @@ const tree = await processor.run(mdast);
 ### Cherry-pick plugins
 
 ```ts
-import { remarkCallouts } from '@lossless-group/lfm';
+import { remarkLfmCallouts } from '@lossless-group/lfm';
 ```
 
 ## What's included
@@ -126,15 +126,19 @@ import { remarkCallouts } from '@lossless-group/lfm';
 |--------|-------------|
 | remark-gfm | Tables, task lists, strikethrough, autolinks |
 | remark-directive | `:::name{}` directive syntax parsing |
-| remark-callouts | Obsidian `> [!type] Title` → directive normalization |
-| remark-heading-ids | Stable, unique anchor id on every heading (`data.id`) + a document outline at `tree.data.headings`. One definition of what a fragment URL says, shared by every site. |
-| remark-citations | Hex-code footnote renumbering + structured citation extraction |
-| remark-lossless-wikilinks | Obsidian `[[Page]]` / `[[folder/Page#Section\|Display]]` → resolved `link` MDAST nodes via a site-supplied resolver. Internal vs external destinations are a per-site decision the package never bakes in. |
-| remark-code-fences | Routes fenced code blocks to format handlers, stamping `data.fence`. Ships with an **empty** registry — you name the formats you want. Seven handlers included, none adding a dependency. |
-| remark-link-preview | `:::link-preview` / `:::link-rollup` directives → annotated AST nodes carrying `data.linkPreviewSpec` (the format taxonomy a renderer dispatches on) |
-| remark-og-fetcher | Build-time OpenGraph fetcher that enriches link nodes with `LinkPreviewData` (cache-backed, configurable backend) |
+| remark-lfm-callouts | Obsidian `> [!type] Title` → directive normalization |
+| remark-lfm-heading-ids | Stable, unique anchor id on every heading (`data.id`) + a document outline at `tree.data.headings`. One definition of what a fragment URL says, shared by every site. |
+| remark-lfm-citations | Hex-code footnote renumbering + structured citation extraction |
+| remark-lfm-wikilinks | Obsidian `[[Page]]` / `[[folder/Page#Section\|Display]]` → resolved `link` MDAST nodes via a site-supplied resolver. Internal vs external destinations are a per-site decision the package never bakes in. |
+| remark-lfm-code-fences | Routes fenced code blocks to format handlers, stamping `data.fence`. Ships with an **empty** registry — you name the formats you want. Seven handlers included, none adding a dependency. |
+| lfm-link-preview | `:::link-preview` / `:::link-rollup` directives → annotated AST nodes carrying `data.linkPreviewSpec` (the format taxonomy a renderer dispatches on) |
+| lfm-og-fetcher | Build-time OpenGraph fetcher that enriches link nodes with `LinkPreviewData` (cache-backed, configurable backend) |
+| lfm-image-carousel | `:::image-carousel` / `:::img-carousel` → one renderer-ready `data.carousel` payload with slides extracted and sequence variants ordered |
+| lfm-heading-blocks | `$$` eyebrow / `&&` subheading bound to the adjacent heading → one `<hgroup>`, plus `eyebrow` on the outline entry |
 
-The `remarkLfm` preset enables **gfm, directives, callouts, citations and heading-ids** by default. Three are opt-in because each needs something from you: `remark-code-fences` needs formats registered, `remark-lossless-wikilinks` needs a resolver, and `remark-og-fetcher` needs `enabled: true` because it makes network calls.
+Three prefixes, one rule. `remark-*` is the ecosystem's — `remark-gfm` and `remark-directive` are dependencies, not ours. `remark-lfm-*` means the remark ecosystem has a formal plugin for this capability and we do it our own way. `lfm-*` means we invented it — our syntax trigger, our handling, no upstream equivalent. Full rule: `context-v/blueprints/Naming-Plugins-Against-the-Remark-Ecosystem.md`.
+
+The `remarkLfm` preset enables **gfm, directives, callouts, citations, heading-ids and heading-blocks** by default. Three are opt-in because each needs something from you: `remark-lfm-code-fences` needs formats registered, `remark-lfm-wikilinks` needs a resolver, and `lfm-og-fetcher` needs `enabled: true` because it makes network calls.
 
 The plugins above are the **triggers** in [the STC paradigm](#the-stc-paradigm) — each one matches its own family of authoring syntaxes and normalizes them into one canonical MDAST shape. Adding a syntax is adding a normalizer plugin; consumers don't change.
 

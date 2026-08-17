@@ -8,7 +8,7 @@ syntax_examples:
     code: 'youtu.be/share={id}'
   - kind: directive
     code: ':::youtube-share[https://youtu.be/jCe2wg1ulus?si=oplqTdsbv8sv2JfH]'
-parse_file: src/plugins/remark-link-preview.ts
+parse_file: src/plugins/lfm-link-preview.ts
 component_file: components/YoutubeShareEmbed--Base.astro
 status: live
 tags: [Embeds, YouTube]

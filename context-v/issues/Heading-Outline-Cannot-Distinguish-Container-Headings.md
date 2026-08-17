@@ -8,7 +8,7 @@ title: "Heading Outline Cannot Distinguish Container Headings from Document Head
 lede: "`tree.data.headings` collects the `###` inside a `> [!info]` callout exactly as if it were a document-level section. That is right for anchors and wrong for a table of contents — and the outline carries nothing that lets a consumer tell the two apart."
 slug: heading-outline-cannot-distinguish-container-headings
 at_semantic_version: 0.0.1.0
-status: Open
+status: Resolved
 category: Issue Resolution
 authors:
   - Michael Staton
@@ -26,7 +26,7 @@ image_prompt: "A nested set of glass display cases; inside the innermost one sit
 
 # Heading Outline Cannot Distinguish Container Headings from Document Headings
 
-**Status:** Open — blocks a downstream spec
+**Status:** Resolved in 0.5.0 — see [Resolution](#resolution)
 **Affects:** `src/plugins/remark-heading-ids.ts`, `LfmHeading` in `src/types/index.ts`
 **Blocks:** `astro-knots/context-v/specs/Reading-Position-Table-of-Contents-for-LFM-Articles.md`
 
@@ -169,7 +169,19 @@ Version-wise this is a **minor** bump, not a major. Worth landing together so a 
 
 ## Resolution
 
-Unresolved. Next action is a package-side change on LFM's release cycle, after which the astro-knots ToC spec unblocks.
+**Resolved in 0.5.0 (2026-08-17).** `inContainer` records the innermost enclosing
+container's name; `nestHeadings`, `filterHeadings` and `LfmHeadingNode` ship
+alongside `slugifyHeading`. All additive — no anchor moved.
+
+One thing the proposal above did not anticipate. The `<hgroup>` emitted by
+`lfmHeadingBlocks` is itself a `containerDirective`, so if it runs before
+`remarkHeadingIds` every eyebrow heading gets stamped `inContainer:
+"heading-block"` and a ToC filtering container headings discards the entire
+document. Fixed by preset ordering — heading blocks run *after* heading ids —
+with a `TRANSPARENT_CONTAINERS` guard in the anchor plugin for consumers who
+wire the two by hand in the other order.
+
+The astro-knots ToC spec is unblocked. See [[2026-08-17_02]].
 
 ## See also
 

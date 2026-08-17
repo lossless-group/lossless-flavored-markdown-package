@@ -16,14 +16,15 @@
 
 import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
-import { remarkCallouts } from './plugins/remark-callouts.js';
-import { remarkCitations } from './plugins/remark-citations.js';
-import { remarkHeadingIds } from './plugins/remark-heading-ids.js';
-import { remarkCodeFences } from './plugins/remark-code-fences.js';
-import { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
-import { remarkOgFetcher } from './plugins/og-fetcher.js';
-import { remarkLinkPreview } from './plugins/remark-link-preview.js';
+import { remarkLfmCallouts } from './plugins/remark-lfm-callouts.js';
+import { remarkLfmCitations } from './plugins/remark-lfm-citations.js';
+import { remarkLfmHeadingIds } from './plugins/remark-lfm-heading-ids.js';
+import { remarkLfmCodeFences } from './plugins/remark-lfm-code-fences.js';
+import { remarkLfmWikilinks } from './plugins/remark-lfm-wikilinks.js';
+import { lfmOgFetcher } from './plugins/lfm-og-fetcher.js';
+import { lfmLinkPreview } from './plugins/lfm-link-preview.js';
 import { lfmImageCarousel } from './plugins/lfm-image-carousel.js';
+import { lfmHeadingBlocks } from './plugins/lfm-heading-blocks.js';
 import type { RemarkLfmOptions } from './types/index.js';
 import type { Root } from 'mdast';
 import type { Plugin } from 'unified';
@@ -51,6 +52,7 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
     callouts: true,
     citations: true,
     headingIds: true,
+    headingBlocks: true,
     ...options,
   } satisfies RemarkLfmOptions;
 
@@ -65,12 +67,12 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   }
 
   if (opts.callouts) {
-    processor.use(remarkCallouts as Plugin);
+    processor.use(remarkLfmCallouts as Plugin);
   }
 
   // Citations must come after gfm (which creates footnote nodes).
   if (opts.citations) {
-    processor.use(remarkCitations as Plugin);
+    processor.use(remarkLfmCitations as Plugin);
   }
 
   // Heading ids run before anything that might rewrite heading children, so
@@ -80,17 +82,27 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // context-v/Maintain-Heading-Anchors-and-Share-Links.md).
   if (opts.headingIds !== false) {
     processor.use(
-      remarkHeadingIds,
+      remarkLfmHeadingIds,
       opts.headingIds === true || opts.headingIds === undefined ? undefined : opts.headingIds,
     );
   }
 
+  // Heading blocks run immediately after heading ids, and the order is load
+  // bearing in both directions: ids must be computed from the document as
+  // authored, and the `<hgroup>` this emits is a containerDirective — running
+  // it first would make every eyebrow heading look nested, so `inContainer`
+  // would filter the whole document out of its own table of contents. It also
+  // back-fills `eyebrow` onto the outline entries the id plugin just built.
+  if (opts.headingBlocks !== false) {
+    processor.use(lfmHeadingBlocks);
+  }
+
   // Code fences: opt-in only, and inert without registered formats. Kept out
   // of the defaults deliberately — a splash page shouldn't carry diagram
-  // knowledge it never uses. Use `.use(remarkCodeFences, …)` directly for the
+  // knowledge it never uses. Use `.use(remarkLfmCodeFences, …)` directly for the
   // leanest bundle; this is the convenience path.
   if (opts.codeFences?.formats?.length) {
-    processor.use(remarkCodeFences, opts.codeFences);
+    processor.use(remarkLfmCodeFences, opts.codeFences);
   }
 
   // Wikilinks: opt-in only — destinations are per-site, so a resolver is
@@ -98,7 +110,7 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // bodies still resolve. Skipped entirely when `wikilinks` is omitted or
   // `false`, which is the default.
   if (opts.wikilinks && opts.wikilinks !== (false as any)) {
-    processor.use(remarkLosslessWikilinks, opts.wikilinks);
+    processor.use(remarkLfmWikilinks, opts.wikilinks);
   }
 
   // OG fetcher runs before the link-preview annotator so the per-URL
@@ -106,7 +118,7 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // walks them. Disabled by default; the plugin itself short-circuits when
   // `enabled !== true`.
   if (opts.ogFetch) {
-    processor.use(remarkOgFetcher, opts.ogFetch);
+    processor.use(lfmOgFetcher, opts.ogFetch);
   }
 
   // Link-preview directive annotation runs whenever directives are enabled.
@@ -115,7 +127,7 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // og-fetcher just attached) so the renderer can dispatch and pass props
   // to LinkPreviewCard / LinkRollup without re-walking children.
   if (opts.directives) {
-    processor.use(remarkLinkPreview);
+    processor.use(lfmLinkPreview);
   }
 
   // Image-carousel annotation rides along with directives for the same reason

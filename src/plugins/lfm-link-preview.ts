@@ -1,12 +1,12 @@
 /**
  * @module
  *
- * remark-link-preview — annotates `:::link-preview` and `:::link-rollup`
+ * lfm-link-preview — annotates `:::link-preview` and `:::link-rollup`
  * containerDirective nodes with parsed spec metadata so the renderer can
  * dispatch to the right `LinkPreview__*` / `LinkRollup__*` Astro component.
  *
  * What this plugin does NOT do:
- * - Fetch Open Graph metadata. That's `remark-og-fetcher`, which runs after
+ * - Fetch Open Graph metadata. That's `lfm-og-fetcher`, which runs after
  *   this plugin and enriches the same `link` children with `data.linkPreview`.
  * - Render anything. Rendering happens in the consuming site's
  *   AstroMarkdown / `LinkPreview__*` Astro components.
@@ -124,7 +124,7 @@ function readAside(raw: string | undefined): LinkPreviewSpec['aside'] {
   return undefined;
 }
 
-export const remarkLinkPreview: Plugin<[], Root> = function () {
+export const lfmLinkPreview: Plugin<[], Root> = function () {
   return (tree: Root) => {
     visit(tree as any);
   };
@@ -209,3 +209,11 @@ function annotate(node: any): void {
 
   node.data = { ...(node.data ?? {}), linkPreviewSpec: spec };
 }
+
+/**
+ * @deprecated Renamed to `lfmLinkPreview` in 0.5.0. The `remark-*` prefix is reserved for
+ * plugins authored outside LFM; everything in this package is ours. This alias
+ * is permanent-until-a-major and costs nothing — keep using it if you like, or
+ * switch at your leisure.
+ */
+export const remarkLinkPreview = lfmLinkPreview;

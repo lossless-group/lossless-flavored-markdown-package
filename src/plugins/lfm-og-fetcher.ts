@@ -1,14 +1,14 @@
 /**
  * @module
  *
- * remark-og-fetcher — build-time Open Graph enrichment for external links.
+ * lfm-og-fetcher — build-time Open Graph enrichment for external links.
  *
  * Walks the MDAST tree, collects every external (http/https) `link` node's
  * URL, batches them through the dispatcher (cache + retries + concurrency
  * + rate-limit), and attaches the resulting `LinkPreviewData` to each
  * link's `node.data.linkPreview` field.
  *
- * Renderers and downstream plugins (e.g. the forthcoming `remark-link-preview`
+ * Renderers and downstream plugins (e.g. the forthcoming `lfm-link-preview`
  * directive plugin and the popover system) read from `node.data.linkPreview`
  * — they never fetch on their own. This keeps the network surface of the
  * pipeline confined to one place and the cache to one file per site.
@@ -44,7 +44,7 @@ type LinkDataExtras = { linkPreview?: LinkPreviewData; skipOgFetch?: boolean };
  * hasn't been opted out via `data.skipOgFetch`.
  *
  * Hand-rolled walker (rather than `unist-util-visit`) keeps this plugin
- * dependency-free, matching the convention in `remark-callouts`.
+ * dependency-free, matching the convention in `remark-lfm-callouts`.
  */
 function collectExternalLinks(node: any, sink: Link[]): void {
   if (!node) return;
@@ -60,7 +60,7 @@ function collectExternalLinks(node: any, sink: Link[]): void {
   }
 }
 
-export const remarkOgFetcher: Plugin<[OGFetchOptions?], Root> = function (options) {
+export const lfmOgFetcher: Plugin<[OGFetchOptions?], Root> = function (options) {
   const opts: OGFetchOptions = { enabled: false, ...(options ?? {}) };
 
   // No-op fast path. Avoid loading the cache, opening the file, etc.
@@ -100,3 +100,11 @@ export const remarkOgFetcher: Plugin<[OGFetchOptions?], Root> = function (option
     await dispatcher.flush();
   };
 };
+
+/**
+ * @deprecated Renamed to `lfmOgFetcher` in 0.5.0. The `remark-*` prefix is reserved for
+ * plugins authored outside LFM; everything in this package is ours. This alias
+ * is permanent-until-a-major and costs nothing — keep using it if you like, or
+ * switch at your leisure.
+ */
+export const remarkOgFetcher = lfmOgFetcher;

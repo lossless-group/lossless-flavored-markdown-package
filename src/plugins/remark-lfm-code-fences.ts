@@ -1,5 +1,5 @@
 /**
- * remark-code-fences: routes fenced code blocks to format handlers.
+ * remark-lfm-code-fences: routes fenced code blocks to format handlers.
  *
  * The unified way: this plugin ships with an empty registry and knows nothing.
  * You pay for exactly the formats you name.
@@ -34,7 +34,7 @@ import type { Root, Code } from 'mdast';
 import type { Plugin } from 'unified';
 import type { FenceFormat, FenceData, RemarkCodeFencesOptions } from '../types/index.js';
 
-/** Walk every `code` node. Hand-rolled per the convention in og-fetcher.ts. */
+/** Walk every `code` node. Hand-rolled per the convention in lfm-og-fetcher.ts. */
 function eachCode(node: any, fn: (c: Code) => void): void {
   if (!node || !Array.isArray(node.children)) return;
   for (const child of node.children) {
@@ -50,7 +50,7 @@ function eachCode(node: any, fn: (c: Code) => void): void {
  * Stamps `node.data.fence` = `{ format, parsed?, error? }`. Leaves every other
  * fence untouched.
  */
-export const remarkCodeFences: Plugin<[RemarkCodeFencesOptions?], Root> = function (
+export const remarkLfmCodeFences: Plugin<[RemarkCodeFencesOptions?], Root> = function (
   options?: RemarkCodeFencesOptions,
 ) {
   const formats = options?.formats ?? [];
@@ -90,3 +90,11 @@ export const remarkCodeFences: Plugin<[RemarkCodeFencesOptions?], Root> = functi
     });
   };
 };
+
+/**
+ * @deprecated Renamed to `remarkLfmCodeFences` in 0.5.0. The `remark-*` prefix is reserved for
+ * plugins authored outside LFM; everything in this package is ours. This alias
+ * is permanent-until-a-major and costs nothing — keep using it if you like, or
+ * switch at your leisure.
+ */
+export const remarkCodeFences = remarkLfmCodeFences;

@@ -1,5 +1,5 @@
 /**
- * remark-callouts: Transforms Obsidian-style callouts into directive nodes.
+ * remark-lfm-callouts: Transforms Obsidian-style callouts into directive nodes.
  *
  * Converts:
  *   > [!warning] Watch out
@@ -38,7 +38,7 @@ const CALLOUT_REGEX = /^\[!([\w-]+)\](-)?\s*(.*)?$/;
  * const processor = unified().use(remarkParse).use(remarkCallouts);
  * ```
  */
-export const remarkCallouts: Plugin<[], Root> = function () {
+export const remarkLfmCallouts: Plugin<[], Root> = function () {
   return (tree: Root) => {
     visitBlockquotes(tree);
   };
@@ -54,6 +54,10 @@ function visitBlockquotes(node: any): void {
       const transformed = tryTransformCallout(child);
       if (transformed) {
         node.children[i] = transformed;
+        // Descend into what we just built. Without this a callout nested in a
+        // callout is never visited, and its `[!type]` marker survives as
+        // literal text in the rendered body.
+        visitBlockquotes(transformed);
         continue;
       }
     }
@@ -137,3 +141,11 @@ function tryTransformCallout(blockquote: Blockquote): any | null {
     },
   };
 }
+
+/**
+ * @deprecated Renamed to `remarkLfmCallouts` in 0.5.0. The `remark-*` prefix is reserved for
+ * plugins authored outside LFM; everything in this package is ours. This alias
+ * is permanent-until-a-major and costs nothing — keep using it if you like, or
+ * switch at your leisure.
+ */
+export const remarkCallouts = remarkLfmCallouts;

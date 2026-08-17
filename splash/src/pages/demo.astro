@@ -1,0 +1,327 @@
+---
+/**
+ * Live feature demo.
+ *
+ * Every payload on this page is produced at build time by calling the real
+ * `parseMarkdown` against the markdown shown beside it. Nothing here is
+ * hand-written illustration, which means the page doubles as an integration
+ * test: if a plugin regresses, this page shows the regression, and if a plugin
+ * throws, the splash build fails.
+ */
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PipelineDemo from '@components/PipelineDemo.astro';
+import { parseMarkdown, nestHeadings, filterHeadings } from '../../../src/index.ts';
+import { mermaid } from '../../../src/formats/index.ts';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+
+const find = (node: any, pred: (n: any) => boolean, out: any[] = []): any[] => {
+  for (const child of node?.children ?? []) {
+    if (pred(child)) out.push(child);
+    find(child, pred, out);
+  }
+  return out;
+};
+const directive = (tree: any, name: string) =>
+  find(tree, (n) => n.type === 'containerDirective' && n.name === name)[0];
+
+// ─── 1. Eyebrow / heading / subheading ────────────────────────────────────
+
+const headingBlockSrc = `$$ Portfolio Operations
+## Every email from a portco, filed as PDFs
+&& Two passes, inventory before export — so you can verify coverage`;
+
+const headingBlockTree = await parseMarkdown(headingBlockSrc);
+const headingBlockNode = directive(headingBlockTree, 'heading-block');
+const headingBlock = {
+  hName: headingBlockNode.data.hName,
+  hProperties: headingBlockNode.data.hProperties,
+  headingBlock: headingBlockNode.data.headingBlock,
+};
+const headingBlockOutline = headingBlockTree.data.headings;
+
+// ─── 2. Table of contents ─────────────────────────────────────────────────
+
+const tocSrc = `# Filing portco email
+
+$$ Inbox
+## Why Care?
+### The volume problem
+
+> [!warning] Rate limits
+> ### Not a section
+
+## What's New?
+#### A deep one`;
+
+const tocTree = await parseMarkdown(tocSrc);
+const tocOutline = tocTree.data.headings;
+const toc = nestHeadings(filterHeadings(tocOutline, 2, 4).filter((h: any) => !h.inContainer));
+
+// ─── 3. Callouts ──────────────────────────────────────────────────────────
+
+const calloutSrc = `> [!warning] The category churns
+> Half the tools on this list will be renamed by spring.`;
+const calloutTree = await parseMarkdown(calloutSrc);
+const calloutNode = directive(calloutTree, 'callout');
+const callout = {
+  name: calloutNode.name,
+  attributes: calloutNode.attributes,
+  data: calloutNode.data,
+};
+
+// ─── 4. Citations ─────────────────────────────────────────────────────────
+
+const citationSrc = `Adoption stalled in Q2.[^b2d4f8] Spend kept climbing.[^7c1e0a]
+
+[^7c1e0a]: [The First Source](https://example.com/first) Published: 2026-01-15
+[^b2d4f8]: [The Second Source](https://other.org/second)`;
+const citationTree = await parseMarkdown(citationSrc);
+const citations = citationTree.data.citations.ordered.map((c: any) => ({
+  index: c.index,
+  identifier: c.identifier,
+  title: c.title,
+  source: c.source,
+  publishedDate: c.publishedDate,
+}));
+
+// ─── 5. Code fences ───────────────────────────────────────────────────────
+
+const fenceSrc = '```mermaid\ngraph TD;\n  A-->B;\n```';
+const fenceTree = await parseMarkdown(fenceSrc, { codeFences: { formats: [mermaid] } });
+const fence = find(fenceTree, (n) => n.type === 'code')[0].data.fence;
+
+// ─── 6. Wikilinks ─────────────────────────────────────────────────────────
+
+const wikilinkSrc = `See [[concepts/Naming Conventions|the naming rule]] and [[Nowhere/Missing]].`;
+const wikilinkTree = await parseMarkdown(wikilinkSrc, {
+  wikilinks: {
+    resolver: (input: any) =>
+      input.path.startsWith('concepts/')
+        ? {
+            url: `/concepts/${input.path.split('/').pop().toLowerCase().replace(/\s+/g, '-')}`,
+            isLocal: true,
+            display: input.display ?? input.path.split('/').pop(),
+          }
+        : null,
+  },
+});
+const wikilinks = find(wikilinkTree, (n: any) => n.type === 'link').map((l: any) => ({
+  url: l.url,
+  class: l.data?.hProperties?.class,
+}));
+
+// ─── 7. Image carousel ────────────────────────────────────────────────────
+
+const carouselSrc = `:::image-carousel{variant="stepper" title="Setting up Aside"}
+::image{src="/Aside__Welcome_20260817T164659Z.jpg" alt="Welcome screen" label="Welcome"}
+::image{src="/Aside__Recovery_20260817T164659Z.jpg" alt="Recovery key" label="Recovery key"}
+:::`;
+const carouselTree = await parseMarkdown(carouselSrc);
+const carousel = directive(carouselTree, 'image-carousel').data.carousel;
+
+// ─── 8. Link preview ──────────────────────────────────────────────────────
+
+const previewSrc = `:::link-rollup{format="gallery" columns="2"}
+- https://www.youtube.com/watch?v=dQw4w9WgXcQ
+- https://example.com/article
+:::`;
+const previewTree = await parseMarkdown(previewSrc);
+const previewSpec = directive(previewTree, 'link-rollup').data.linkPreviewSpec;
+
+const pageTitle = 'Live demo — every feature, parsed at build time';
+---
+
+<BaseLayout
+  title={pageTitle}
+  description="Authored markdown on the left, the payload LFM actually returned on the right — every value computed at build time by the real pipeline."
+>
+  <section class="intro">
+    <div class="container">
+      <p class="folio" data-num="§">Demo</p>
+      <h1>Every feature, parsed at build time</h1>
+      <p class="intro__lede">
+        Markdown on the left. On the right, what <code>parseMarkdown</code> actually
+        handed back when this page was built — not an illustration of it.
+      </p>
+      <p class="intro__note">
+        LFM returns an <strong>AST, not HTML</strong>. Deciding what a reader sees
+        belongs to the render layer, and this splash is one render layer among
+        many — so the payload is the honest thing to show. Where a rendering
+        makes the point better, it sits underneath.
+      </p>
+      <nav class="intro__jump" aria-label="Jump to a feature">
+        <a href="#eyebrow-heading-subheading">Eyebrow blocks</a>
+        <a href="#table-of-contents">Table of contents</a>
+        <a href="#callouts">Callouts</a>
+        <a href="#citations">Citations</a>
+        <a href="#code-fences">Code fences</a>
+        <a href="#wikilinks">Wikilinks</a>
+        <a href="#image-carousels">Carousels</a>
+        <a href="#link-rollups">Link rollups</a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="demos">
+    <div class="container">
+
+      <PipelineDemo
+        title="Eyebrow, heading, subheading"
+        plugin="lfm-heading-blocks"
+        note="Markdown gives you one line where editorial practice has always used three. $$ and && bind by adjacency to the heading between them — a blank line breaks the binding and the markers revert to ordinary text."
+        source={headingBlockSrc}
+        result={headingBlock}
+      >
+        <hgroup slot="rendered" class="heading-block">
+          <p class="heading-block-eyebrow eyebrow">{headingBlock.headingBlock.eyebrow}</p>
+          <h2>Every email from a portco, filed as PDFs</h2>
+          {headingBlock.headingBlock.subheadings.map((s: string) => (
+            <p class="heading-block-subheading subheading">{s}</p>
+          ))}
+        </hgroup>
+      </PipelineDemo>
+
+      <PipelineDemo
+        title="Table of contents"
+        plugin="remark-lfm-heading-ids"
+        note="Every heading gets a stable, deduped anchor — including the one inside that callout, because a share link into a callout is a link like any other. inContainer is what lets a ToC leave it out without losing the anchor."
+        source={tocSrc}
+        resultLabel="tree.data.headings"
+        result={tocOutline}
+      >
+        <div slot="rendered">
+          <p class="toc__caption">
+            <code>nestHeadings(filterHeadings(outline, 2, 4).filter(h =&gt; !h.inContainer))</code>
+          </p>
+          <ul class="toc">
+            {toc.map((node: any) => (
+              <li>
+                {node.eyebrow && <span class="toc__eyebrow">{node.eyebrow}</span>}
+                <a href={`#${node.id}`}>{node.text}</a>
+                {node.children.length > 0 && (
+                  <ul>
+                    {node.children.map((child: any) => (
+                      <li><a href={`#${child.id}`}>{child.text}</a></li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </PipelineDemo>
+
+      <PipelineDemo
+        title="Callouts"
+        plugin="remark-lfm-callouts"
+        note="An Obsidian callout and a :::callout{type=&quot;warning&quot;} directive produce the same node, so your component renders one shape regardless of which tool wrote the file."
+        source={calloutSrc}
+        result={callout}
+      />
+
+      <PipelineDemo
+        title="Citations"
+        plugin="remark-lfm-citations"
+        note="Authors write stable, meaningless hex ids so inserting a source mid-document renumbers nothing. The sequential index is assigned at build time, by order of first appearance — note the second-defined source is citation 1."
+        source={citationSrc}
+        resultLabel="tree.data.citations.ordered"
+        result={citations}
+      />
+
+      <PipelineDemo
+        title="Code fences"
+        plugin="remark-lfm-code-fences"
+        note="The registry ships empty — you pay for the formats you name. A handler may parse a fence or merely claim its language so a renderer can dispatch; a handler that throws records the error rather than failing your build."
+        source={fenceSrc}
+        resultLabel="code node's data.fence"
+        result={fence}
+      />
+
+      <PipelineDemo
+        title="Wikilinks"
+        plugin="remark-lfm-wikilinks"
+        note="Destinations are per-site, so the package ships no resolver and the plugin stays off until you supply one. An unresolved link degrades to plain display text — a reader never sees raw brackets."
+        source={wikilinkSrc}
+        resultLabel="resolved link nodes (the second stayed text)"
+        result={wikilinks}
+      />
+
+      <PipelineDemo
+        title="Image carousels"
+        plugin="lfm-image-carousel"
+        note="Slides extracted, the img-carousel alias collapsed, and order resolved. Sequence variants sort chronologically by the stamp in the filename — and the sort is stable, because that stamp marks a prep run rather than a capture."
+        source={carouselSrc}
+        resultLabel="containerDirective data.carousel"
+        result={carousel}
+      />
+
+      <PipelineDemo
+        title="Link rollups"
+        plugin="lfm-link-preview"
+        note="Attributes parsed, URLs collected in document order and deduped, each link classified against the provider catalog. No network call happens here — fetching is the og-fetcher's job, and only when you enable it."
+        source={previewSrc}
+        resultLabel="containerDirective data.linkPreviewSpec"
+        result={previewSpec}
+      />
+
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .intro { padding: var(--space-16) 0 var(--space-8); }
+  .intro h1 { margin: var(--space-2) 0 var(--space-4); }
+  .intro__lede { font-size: 1.15rem; max-width: 62ch; color: var(--color-text-soft); }
+  .intro__note { max-width: 62ch; color: var(--color-text-dim); font-size: 0.95rem; }
+
+  .intro__jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin-top: var(--space-6);
+    font-size: 0.88rem;
+  }
+
+  .demos { padding-bottom: var(--space-20); }
+
+  /* The class contract from lfm-heading-blocks, styled the way a consuming
+     site would. The scoped `.heading-block *` selector is what outranks a
+     site's own `.prose p` rules — the bare `.eyebrow` alone would lose. */
+  .heading-block { margin: 0; }
+
+  .heading-block .heading-block-eyebrow {
+    margin: 0 0 var(--space-2);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .heading-block h2 { margin: 0; line-height: 1.25; }
+
+  .heading-block .heading-block-subheading {
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-dim);
+    font-size: 0.98rem;
+  }
+
+  .toc__caption {
+    margin: 0 0 var(--space-3);
+    font-size: 0.78rem;
+    color: var(--color-text-dimmer);
+    overflow-x: auto;
+  }
+
+  .toc { margin: 0; padding-left: var(--space-5); }
+  .toc ul { padding-left: var(--space-5); }
+  .toc li { margin: var(--space-1) 0; }
+
+  .toc__eyebrow {
+    display: block;
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+</style>

@@ -75,6 +75,13 @@ export interface RemarkLfmOptions {
    */
   headingIds?: RemarkHeadingIdsOptions | boolean;
   /**
+   * Bind `$$` eyebrow / `&&` subheading lines to the heading they sit against,
+   * producing one `<hgroup>` per block. Default: true — a marker only means
+   * anything when the adjacent line is a heading, so the plugin is inert on
+   * documents that don't use the syntax.
+   */
+  headingBlocks?: boolean;
+  /**
    * Enable Obsidian wikilink resolution. Disabled by default — wikilink
    * destinations are inherently per-site, so consumers must supply a
    * `resolver` function via `WikilinkOptions`. Omit (or pass `false`) to
@@ -161,6 +168,50 @@ export interface LfmHeading {
   duplicateOf?: string;
   /** True when the text slugified to nothing and a positional id was used. */
   synthetic?: boolean;
+  /**
+   * Set when the heading sits inside a container rather than at document
+   * level — the container directive's `name` (`callout`, `details`,
+   * `image-carousel`, …), or `blockquote` / `listItem` for plain nesting.
+   * Innermost container wins.
+   *
+   * Anchors are unaffected: a heading inside a callout still gets a stable id
+   * and a share link to it still lands. This field exists so a table of
+   * contents can leave it out — and so a consumer can decide *per container*,
+   * since a `details` heading is a navigable section while a `callout` one is
+   * an aside.
+   */
+  inContainer?: string;
+  /**
+   * Eyebrow text when this heading is part of an eyebrow block, so a ToC can
+   * render the grouping label without re-walking the tree.
+   *
+   * Stamped by `lfmHeadingBlocks`, not by `remarkHeadingIds` — the eyebrow is
+   * LFM syntax, and the anchor plugin stays a generic remark concern.
+   */
+  eyebrow?: string;
+}
+
+/**
+ * The nested form of the outline, produced by `nestHeadings()`.
+ *
+ * Extends rather than replaces `LfmHeading`, so fields a consumer has already
+ * filtered or decorated survive the fold.
+ */
+export interface LfmHeadingNode extends LfmHeading {
+  /** Headings of greater depth that follow this one, until depth returns. */
+  children: LfmHeadingNode[];
+}
+
+/**
+ * Attached to a heading-block node's `data.headingBlock` by `lfmHeadingBlocks`.
+ * Plain text, markup stripped — the rendered markup lives in the node's
+ * children, this is for consumers that want the strings.
+ */
+export interface HeadingBlockData {
+  /** Text of the `$$` / `^^` line, when present. */
+  eyebrow?: string;
+  /** Text of each `&&` line, in order. Empty when the block has none. */
+  subheadings: string[];
 }
 
 /**

@@ -32,29 +32,44 @@ export { parseMarkdown, createLfmProcessor } from './parse.js';
 export { remarkLfm } from './preset.js';
 
 /** Obsidian callout normalizer — transforms `> [!type]` into directive nodes. */
-export { remarkCallouts } from './plugins/remark-callouts.js';
+export { remarkLfmCallouts, remarkCallouts } from './plugins/remark-lfm-callouts.js';
 
 /** Citation processor — hex-code renumbering, structured definition parsing. */
-export { remarkCitations } from './plugins/remark-citations.js';
+export { remarkLfmCitations, remarkCitations } from './plugins/remark-lfm-citations.js';
 
 /** Code-fence router — annotates fences with a resolved format handler.
  *  Ships with an empty registry; you pay for the formats you name. */
-export { remarkCodeFences } from './plugins/remark-code-fences.js';
+export { remarkLfmCodeFences, remarkCodeFences } from './plugins/remark-lfm-code-fences.js';
 
 /** Heading anchor ids + document outline — stamps `data.id` on every heading
  *  and attaches `tree.data.headings`. A fragment URL is a public contract;
  *  this is the one place that decides what it says. */
-export { remarkHeadingIds, slugifyHeading } from './plugins/remark-heading-ids.js';
+export {
+  remarkLfmHeadingIds,
+  remarkHeadingIds,
+  slugifyHeading,
+  nestHeadings,
+  filterHeadings,
+} from './plugins/remark-lfm-heading-ids.js';
+
+/** `$$` eyebrow / `&&` subheading binder — wraps a heading and its adjacent
+ *  editorial lines in one `<hgroup>`, and stamps `eyebrow` onto the outline. */
+export {
+  lfmHeadingBlocks,
+  EYEBROW_MARKERS,
+  SUBHEADING_MARKER,
+  HEADING_BLOCK_NAME,
+} from './plugins/lfm-heading-blocks.js';
 
 /** Obsidian wikilink resolver — site-configured internal/external path mapping
  *  for `[[Page]]`, `[[Page|Display]]`, `[[folder/Page#Section|Display]]`. */
-export { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
+export { remarkLfmWikilinks, remarkLosslessWikilinks } from './plugins/remark-lfm-wikilinks.js';
 
 /** Build-time Open Graph metadata fetcher — enriches external links with preview data. */
-export { remarkOgFetcher } from './plugins/og-fetcher.js';
+export { lfmOgFetcher, remarkOgFetcher } from './plugins/lfm-og-fetcher.js';
 
 /** `:::link-preview` / `:::link-rollup` directive annotator — stamps `data.linkPreviewSpec`. */
-export { remarkLinkPreview } from './plugins/remark-link-preview.js';
+export { lfmLinkPreview, remarkLinkPreview } from './plugins/lfm-link-preview.js';
 
 /** `:::image-carousel` / `:::img-carousel` normalizer — collapses the alias,
  *  extracts slides, and orders sequence variants by their filename timestamp. */
@@ -89,7 +104,7 @@ export type {
   LinkPreviewFormat,
   /** Format taxonomy for `LinkRollup__*` components. */
   LinkRollupFormat,
-} from './plugins/remark-link-preview.js';
+} from './plugins/lfm-link-preview.js';
 
 export type {
   /** Result of a successful URL classification. */
@@ -121,6 +136,10 @@ export type {
   FenceData,
   /** One entry in the `tree.data.headings` outline. */
   LfmHeading,
+  /** The nested form of the outline, produced by `nestHeadings()`. */
+  LfmHeadingNode,
+  /** Plain-text payload on a heading block's `data.headingBlock`. */
+  HeadingBlockData,
   /** Input passed to a wikilink resolver function. */
   WikilinkResolverInput,
   /** Resolution returned by a wikilink resolver function. */
@@ -150,4 +169,4 @@ export type {
   CitationWarning,
   /** Options for the remarkCitations plugin. */
   RemarkCitationsOptions,
-} from './plugins/remark-citations.js';
+} from './plugins/remark-lfm-citations.js';

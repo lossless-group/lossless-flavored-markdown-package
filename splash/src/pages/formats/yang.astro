@@ -6,7 +6,7 @@
 // also means this page proves the current source works, not the last release.
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
-import { remarkCodeFences } from '../../../../src/plugins/remark-code-fences.ts';
+import { remarkLfmCodeFences } from '../../../../src/plugins/remark-lfm-code-fences.ts';
 import { yang } from '../../../../src/formats/yang.ts';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
@@ -93,7 +93,7 @@ const source = `module lossless-fleet {
 
 const markdown = '```yang\n' + source + '\n```';
 
-const processor = unified().use(remarkParse).use(remarkCodeFences, { formats: [yang] });
+const processor = unified().use(remarkParse).use(remarkLfmCodeFences, { formats: [yang] });
 const tree: any = await processor.run(processor.parse(markdown) as any);
 
 const codeNode: any = tree.children.find((n: any) => n.type === 'code');
@@ -111,7 +111,7 @@ const mod = fence?.parsed?.module;
       <h1>YANG renders as a tree</h1>
       <p class="lede">
         A <code>yang</code> fence is parsed at build time by
-        <code>remarkCodeFences</code> and the <code>yang</code> handler, then
+        <code>remarkLfmCodeFences</code> and the <code>yang</code> handler, then
         rendered as the RFC&nbsp;8340 tree diagram — YANG's canonical visual
         form. No dependencies: the RFC&nbsp;7950 grammar is regular enough to
         tokenize by hand.

@@ -101,7 +101,7 @@ function slugifyAnchor(s: string): string {
  * });
  * ```
  */
-export const remarkLosslessWikilinks: Plugin<[WikilinkOptions], Root> = function (options) {
+export const remarkLfmWikilinks: Plugin<[WikilinkOptions], Root> = function (options) {
   if (!options || typeof options.resolver !== 'function') {
     throw new Error(
       'remarkLosslessWikilinks: a `resolver` function is required. ' +
@@ -112,8 +112,8 @@ export const remarkLosslessWikilinks: Plugin<[WikilinkOptions], Root> = function
   const { resolver, onUnresolved } = options;
 
   return function transformer(tree: Root) {
-    // Hand-rolled walker — matches the convention in remark-callouts.ts and
-    // og-fetcher.ts of avoiding the `unist-util-visit` dependency. Walks
+    // Hand-rolled walker — matches the convention in remark-lfm-callouts.ts and
+    // lfm-og-fetcher.ts of avoiding the `unist-util-visit` dependency. Walks
     // every node, but only acts on `text` nodes whose value contains the
     // wikilink pattern. Splices replacement nodes in-place.
     walk(tree as any);
@@ -217,3 +217,11 @@ export const remarkLosslessWikilinks: Plugin<[WikilinkOptions], Root> = function
     }
   };
 };
+
+/**
+ * @deprecated Renamed to `remarkLfmWikilinks` in 0.5.0. The `remark-*` prefix is reserved for
+ * plugins authored outside LFM; everything in this package is ours. This alias
+ * is permanent-until-a-major and costs nothing — keep using it if you like, or
+ * switch at your leisure.
+ */
+export const remarkLosslessWikilinks = remarkLfmWikilinks;

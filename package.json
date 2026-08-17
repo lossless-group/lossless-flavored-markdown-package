@@ -1,6 +1,6 @@
 {
   "name": "@lossless-group/lfm",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Lossless Flavored Markdown \u2014 a polyglot extended markdown pipeline for remark/rehype",
   "type": "module",
   "main": "./dist/index.js",
@@ -41,6 +41,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "test:only": "node --test test/*.test.mjs",
     "lfm:gh": "pnpm build && if npm view \"@lossless-group/lfm@$(node -p \"require('./package.json').version\")\" version --registry=https://npm.pkg.github.com \"--//npm.pkg.github.com/:_authToken=$(gh auth token)\" >/dev/null 2>&1; then echo \"GitHub Packages: version already published, skipping\"; else npm publish --registry=https://npm.pkg.github.com \"--//npm.pkg.github.com/:_authToken=$(gh auth token)\"; fi",
     "lfm:jsr": "pnpx jsr publish",
     "lfm:publish": "pnpm lfm:gh && pnpm lfm:jsr"

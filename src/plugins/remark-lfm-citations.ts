@@ -1,5 +1,5 @@
 /**
- * remark-citations: Transforms footnote identifiers into sequentially-numbered
+ * remark-lfm-citations: Transforms footnote identifiers into sequentially-numbered
  * citations with structured metadata parsing.
  *
  * Runs after remark-gfm (which creates footnoteReference and footnoteDefinition
@@ -242,7 +242,7 @@ function enrichReferences(node: any, indexMap: Map<string, number>): void {
  * // tree.data.citations.ordered contains sequentially-numbered Citation objects
  * ```
  */
-export const remarkCitations: Plugin<[RemarkCitationsOptions?], Root> = function (
+export const remarkLfmCitations: Plugin<[RemarkCitationsOptions?], Root> = function (
   options?: RemarkCitationsOptions
 ) {
   const defaultValidate = {
@@ -391,7 +391,15 @@ export const remarkCitations: Plugin<[RemarkCitationsOptions?], Root> = function
 
     // Log warnings
     for (const w of warnings) {
-      console.warn(`[remark-citations] ${w.message}`);
+      console.warn(`[remark-lfm-citations] ${w.message}`);
     }
   };
 };
+
+/**
+ * @deprecated Renamed to `remarkLfmCitations` in 0.5.0. The `remark-*` prefix is reserved for
+ * plugins authored outside LFM; everything in this package is ours. This alias
+ * is permanent-until-a-major and costs nothing — keep using it if you like, or
+ * switch at your leisure.
+ */
+export const remarkCitations = remarkLfmCitations;

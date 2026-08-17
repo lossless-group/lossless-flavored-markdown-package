@@ -1,5 +1,5 @@
 /**
- * remark-heading-ids: Assigns a stable, unique anchor id to every heading and
+ * remark-lfm-heading-ids: Assigns a stable, unique anchor id to every heading and
  * attaches a document outline to the tree.
  *
  * A fragment URL is a public contract. Before this plugin each site computed
@@ -18,19 +18,28 @@
  * Attaches to the tree:
  *   data.headings     ordered outline, ready to render a table of contents
  *
+ * Each outline entry records `inContainer` when the heading sits inside a
+ * callout, `:::details`, blockquote or list item. Every such heading still gets
+ * an anchor — a share link into a callout is a link like any other — but a
+ * table of contents usually shouldn't list it as a waypoint, and until this
+ * field existed the outline gave a consumer no way to tell.
+ *
+ * `nestHeadings` and `filterHeadings` ship alongside for the same reason
+ * `slugifyHeading` does: consumers need the algorithm, not just the output.
+ *
  * The renderer decides what a heading *looks* like and whether it carries a
  * share affordance; this plugin only decides what it is called. Same seam as
- * remark-citations, which computes citation indices and leaves presentation
+ * remark-lfm-citations, which computes citation indices and leaves presentation
  * to each site's Sources component.
  *
  * Deliberately dependency-free: the walker and text extraction are hand-rolled
  * rather than pulling `unist-util-visit` / `mdast-util-to-string`, matching the
- * convention set in og-fetcher.ts and remark-lossless-wikilinks.ts.
+ * convention set in lfm-og-fetcher.ts and remark-lfm-wikilinks.ts.
  */
 
 import type { Root, Heading } from 'mdast';
 import type { Plugin } from 'unified';
-import type { LfmHeading, RemarkHeadingIdsOptions } from '../types/index.js';
+import type { LfmHeading, LfmHeadingNode, RemarkHeadingIdsOptions } from '../types/index.js';
 
 /**
  * The default heading slugifier.
@@ -71,15 +80,107 @@ function extractText(node: any): string {
   return '';
 }
 
-/** Walk every `heading` node in document order. Hand-rolled; see module note. */
-function eachHeading(node: any, fn: (h: Heading) => void): void {
+/**
+ * Container node types that wrap a heading without making it *nested* in any
+ * sense a reader would recognize.
+ *
+ * `heading-block` is the `<hgroup>` emitted by `lfmHeadingBlocks` — it exists
+ * to group an eyebrow and subheading around a heading, not to bury it. Under
+ * the normal preset order this plugin runs first and never sees one; the guard
+ * is here for consumers who wire the two plugins by hand in the other order,
+ * where the alternative is every eyebrow heading silently vanishing from their
+ * table of contents.
+ */
+const TRANSPARENT_CONTAINERS = new Set(['heading-block']);
+
+/** The container label for a node, or `undefined` if it doesn't enclose. */
+function containerNameOf(node: any): string | undefined {
+  if (node.type === 'containerDirective') {
+    const name = typeof node.name === 'string' ? node.name : 'directive';
+    return TRANSPARENT_CONTAINERS.has(name) ? undefined : name;
+  }
+  if (node.type === 'blockquote') return 'blockquote';
+  if (node.type === 'listItem') return 'listItem';
+  return undefined;
+}
+
+/**
+ * Walk every `heading` node in document order. Hand-rolled; see module note.
+ *
+ * `container` carries the name of the nearest enclosing container as the walk
+ * descends, so the innermost one wins.
+ */
+function eachHeading(
+  node: any,
+  fn: (h: Heading, container?: string) => void,
+  container?: string,
+): void {
   if (!node || !Array.isArray(node.children)) return;
   for (const child of node.children) {
-    if (child.type === 'heading') fn(child as Heading);
+    if (child.type === 'heading') fn(child as Heading, container);
     // Recurse regardless — headings nest inside blockquotes, list items and
     // container directives (a `> [!info]` body can hold an `###`).
-    eachHeading(child, fn);
+    eachHeading(child, fn, containerNameOf(child) ?? container);
   }
+}
+
+/**
+ * Fold the flat outline into a tree.
+ *
+ * Pure — no framework, no DOM. Every consumer rendering a nested table of
+ * contents writes this fold as its first act, and it has enough edge cases
+ * (a document that opens at `h3`, a jump from `h2` straight to `h4`, a
+ * trailing `h6`) that each would get them wrong independently.
+ *
+ * Depth gaps are not filled with placeholder nodes: an `h4` under an `h2`
+ * becomes a direct child. Inventing an empty `h3` would put a waypoint in the
+ * ToC that has no anchor to point at.
+ *
+ * @example
+ * ```ts
+ * const outline = (tree as any).data?.headings ?? [];
+ * const toc = nestHeadings(filterHeadings(outline));
+ * ```
+ */
+export function nestHeadings(headings: LfmHeading[]): LfmHeadingNode[] {
+  const roots: LfmHeadingNode[] = [];
+  const stack: LfmHeadingNode[] = [];
+
+  for (const heading of headings) {
+    const node: LfmHeadingNode = { ...heading, children: [] };
+    // Pop until the top of the stack is strictly shallower than this heading.
+    while (stack.length > 0 && stack[stack.length - 1]!.depth >= node.depth) {
+      stack.pop();
+    }
+    const parent = stack[stack.length - 1];
+    if (parent) parent.children.push(node);
+    else roots.push(node);
+    stack.push(node);
+  }
+
+  return roots;
+}
+
+/**
+ * Apply a depth band and drop `synthetic` entries. The other fold every
+ * consumer writes.
+ *
+ * `synthetic` headings slugified to nothing, so they carry no label worth
+ * showing — but their anchors are untouched, and a share link to one still
+ * works. This only decides what a ToC *lists*.
+ *
+ * The `h2`–`h3` default is the common answer, not a rule; pass your own band.
+ * Deliberately a helper rather than a plugin option: trimming the outline at
+ * source would make it disagree with the anchors actually in the document.
+ */
+export function filterHeadings(
+  headings: LfmHeading[],
+  minDepth = 2,
+  maxDepth = 3,
+): LfmHeading[] {
+  return headings.filter(
+    (h) => !h.synthetic && h.depth >= minDepth && h.depth <= maxDepth,
+  );
 }
 
 /**
@@ -92,7 +193,7 @@ function eachHeading(node: any, fn: (h: Heading) => void): void {
  * // each heading node carries node.data.id
  * ```
  */
-export const remarkHeadingIds: Plugin<[RemarkHeadingIdsOptions?], Root> = function (
+export const remarkLfmHeadingIds: Plugin<[RemarkHeadingIdsOptions?], Root> = function (
   options?: RemarkHeadingIdsOptions,
 ) {
   const slugify = options?.slugify ?? slugifyHeading;
@@ -106,7 +207,7 @@ export const remarkHeadingIds: Plugin<[RemarkHeadingIdsOptions?], Root> = functi
     const headings: LfmHeading[] = [];
     let index = 0;
 
-    eachHeading(tree, (node) => {
+    eachHeading(tree, (node, container) => {
       index++;
       const text = extractText(node).trim();
       const base = slugify(text);
@@ -141,6 +242,7 @@ export const remarkHeadingIds: Plugin<[RemarkHeadingIdsOptions?], Root> = functi
       };
       if (duplicateOf) entry.duplicateOf = duplicateOf;
       if (synthetic) entry.synthetic = true;
+      if (container) entry.inContainer = container;
       headings.push(entry);
     });
 
@@ -148,3 +250,11 @@ export const remarkHeadingIds: Plugin<[RemarkHeadingIdsOptions?], Root> = functi
     treeData.headings = headings;
   };
 };
+
+/**
+ * @deprecated Renamed to `remarkLfmHeadingIds` in 0.5.0. The `remark-*` prefix is reserved for
+ * plugins authored outside LFM; everything in this package is ours. This alias
+ * is permanent-until-a-major and costs nothing — keep using it if you like, or
+ * switch at your leisure.
+ */
+export const remarkHeadingIds = remarkLfmHeadingIds;

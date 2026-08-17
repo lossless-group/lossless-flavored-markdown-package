@@ -1,0 +1,154 @@
+---
+/**
+ * One feature, shown as: authored markdown → what the pipeline handed back.
+ *
+ * The right-hand side is real. Every value on this page comes from calling
+ * `parseMarkdown` at build time against the source shown on the left, so the
+ * page cannot drift from the package — if a plugin regresses, the demo shows
+ * the regression rather than a stale illustration of how it used to work.
+ *
+ * LFM returns an AST, not HTML — deciding what a reader sees is the render
+ * layer's job, and this splash is a render layer like any other. So the
+ * default view is the normalized payload, and `slot="rendered"` is where a
+ * demo can additionally show one plausible rendering of it.
+ */
+interface Props {
+  /** Feature name — also the anchor target. */
+  title: string;
+  /** Which plugin produced this, for the byline. */
+  plugin: string;
+  /** One line on why the feature exists. */
+  note: string;
+  /** The authored markdown. */
+  source: string;
+  /** Label for the right-hand pane. */
+  resultLabel?: string;
+  /** The payload, already narrowed to the interesting part. */
+  result: unknown;
+}
+
+const { title, plugin, note, source, resultLabel = 'What the pipeline attached', result } = Astro.props;
+
+const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/** Maps and Dates don't survive JSON.stringify usefully. */
+const pretty = JSON.stringify(
+  result,
+  (_key, value) => {
+    if (value instanceof Map) return Object.fromEntries(value);
+    if (value instanceof Date) return value.toISOString();
+    return value;
+  },
+  2,
+);
+---
+
+<article class="demo" id={id}>
+  <header class="demo__head">
+    <h3 class="demo__title">{title}</h3>
+    <code class="demo__plugin">{plugin}</code>
+  </header>
+  <p class="demo__note">{note}</p>
+
+  <div class="demo__panes">
+    <section class="demo__pane">
+      <p class="demo__label">Authored markdown</p>
+      <pre class="demo__code"><code>{source.trim()}</code></pre>
+    </section>
+
+    <section class="demo__pane">
+      <p class="demo__label">{resultLabel}</p>
+      <pre class="demo__code demo__code--result"><code>{pretty}</code></pre>
+    </section>
+  </div>
+
+  {Astro.slots.has('rendered') && (
+    <section class="demo__rendered">
+      <p class="demo__label">One way a renderer could show it</p>
+      <div class="demo__stage"><slot name="rendered" /></div>
+    </section>
+  )}
+</article>
+
+<style>
+  .demo {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    padding: var(--space-6);
+    margin-bottom: var(--space-8);
+  }
+
+  .demo__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+
+  .demo__title {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.3;
+  }
+
+  .demo__plugin {
+    font-size: 0.78rem;
+    color: var(--color-text-dim);
+    background: var(--color-bg-code);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    padding: 0.1rem 0.6rem;
+  }
+
+  .demo__note {
+    margin: var(--space-2) 0 var(--space-5);
+    color: var(--color-text-soft);
+    max-width: 62ch;
+  }
+
+  .demo__panes {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 900px) {
+    .demo__panes { grid-template-columns: 1fr 1fr; }
+  }
+
+  .demo__pane { min-width: 0; }
+
+  .demo__label {
+    margin: 0 0 var(--space-2);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-dimmer);
+  }
+
+  .demo__code {
+    margin: 0;
+    padding: var(--space-4);
+    background: var(--color-bg-code);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    /* Wide payloads scroll inside their own pane; the page never does. */
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    max-height: 22rem;
+    overflow-y: auto;
+  }
+
+  .demo__code--result { color: var(--color-text-soft); }
+
+  .demo__rendered { margin-top: var(--space-5); }
+
+  .demo__stage {
+    padding: var(--space-5);
+    border: 1px dashed var(--color-border-accent);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-soft);
+  }
+</style>

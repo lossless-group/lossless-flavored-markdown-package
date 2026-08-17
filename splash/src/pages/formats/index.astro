@@ -6,7 +6,7 @@
 // a tree, a URL, a parsed summary, or just a claimed language.
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
-import { remarkCodeFences } from '../../../../src/plugins/remark-code-fences.ts';
+import { remarkLfmCodeFences } from '../../../../src/plugins/remark-lfm-code-fences.ts';
 import { jsonSchema, vegaLite, graphviz, mermaid, jsonCanvas } from '../../../../src/formats/index.ts';
 import { yang } from '../../../../src/formats/yang.ts';
 import { plantuml } from '../../../../src/formats/plantuml.ts';
@@ -73,7 +73,7 @@ const vlSrc = JSON.stringify(
 
 const dotSrc = `digraph fences {
   rankdir=LR;
-  fence -> remarkCodeFences -> handler -> "data.fence";
+  fence -> remarkLfmCodeFences -> handler -> "data.fence";
 }`;
 
 const fences = [
@@ -87,7 +87,7 @@ const markdown = fences.map((f) => '```' + f.lang + '\n' + f.src + '\n```').join
 
 const processor = unified()
   .use(remarkParse)
-  .use(remarkCodeFences, {
+  .use(remarkLfmCodeFences, {
     formats: [jsonSchema, plantuml, vegaLite, graphviz, yang, mermaid, jsonCanvas],
   });
 const tree: any = await processor.run(processor.parse(markdown) as any);
@@ -112,7 +112,7 @@ const dot = byFormat('graphviz');
       <p class="eyebrow">Code-fence formats</p>
       <h1>One registry, four very different jobs</h1>
       <p class="lede">
-        <code>remarkCodeFences</code> ships knowing no formats. Each handler below
+        <code>remarkLfmCodeFences</code> ships knowing no formats. Each handler below
         was registered explicitly. What they produce differs on purpose — some
         parse to a tree, one produces a URL, one hands a spec to a client
         renderer, one just claims the language.
