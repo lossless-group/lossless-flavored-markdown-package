@@ -10,7 +10,7 @@ date_modified: 2026-08-17
 date_authored_initial_draft: 2026-08-17
 date_authored_current_draft: 2026-08-17
 at_semantic_version: 0.0.1.0
-status: Open
+status: Resolved
 category: Issue Resolution
 authors:
   - Michael Staton
@@ -28,7 +28,7 @@ image_prompt: "A shipping crate with six labelled compartments, four of them sea
 
 # JSR Export Map Omits the Formats Subpaths
 
-**Status:** Open — latent, but the documented API doesn't work
+**Status:** Resolved in 0.5.1 — see [Resolution](#resolution)
 **Affects:** `deno.json`, every consumer installing from JSR
 **Present since:** 0.4.1, the release that introduced the format registry
 
@@ -150,7 +150,20 @@ Low, and entirely additive. No published version is retroactively affected — 0
 
 ## Resolution
 
-Unresolved. Next action is a 0.5.1 with the export map corrected and the parity test added.
+**Resolved in 0.5.1 (2026-08-17).** `deno.json` now mirrors `package.json`; all
+four `./formats*` subpaths are exported and each passes its own slow-types
+check on publish, PlantUML's node builtin included.
+
+Option (1) from above shipped alongside it: `test/export-parity.test.mjs`
+compares the key sets both directions, verifies every JSR target exists and is
+TypeScript source, verifies every npm target resolves into `dist/`, and checks
+that the two manifests agree on name and version. The test was confirmed to
+fail against the pre-fix state — removing `./formats/plantuml` from
+`deno.json` reproduces the original defect with a message naming the fix —
+because a parity test that cannot detect the bug it was written for is worse
+than none.
+
+No source file changed. See `changelog/releases/0.5.1.md`.
 
 ## See also
 
