@@ -11,7 +11,8 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PipelineDemo from '@components/PipelineDemo.astro';
 import { parseMarkdown, nestHeadings, filterHeadings } from '../../../src/index.ts';
-import { mermaid } from '../../../src/formats/index.ts';
+import { mermaid, graphviz, jsonCanvas, vegaLite, yang, jsonSchema } from '../../../src/formats/index.ts';
+import { plantuml } from '../../../src/formats/plantuml.ts';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -85,11 +86,141 @@ const citations = citationTree.data.citations.ordered.map((c: any) => ({
   publishedDate: c.publishedDate,
 }));
 
-// ─── 5. Code fences ───────────────────────────────────────────────────────
+// ─── 5. Code fences — every shipped handler ───────────────────────────────
+// One fence per diagram language, each run through the real registry. The
+// point of the section is that "support a diagram language" means four
+// different things depending on who does the drawing.
 
-const fenceSrc = '```mermaid\ngraph TD;\n  A-->B;\n```';
-const fenceTree = await parseMarkdown(fenceSrc, { codeFences: { formats: [mermaid] } });
-const fence = find(fenceTree, (n) => n.type === 'code')[0].data.fence;
+const FENCE_FORMATS = [mermaid, graphviz, jsonCanvas, vegaLite, yang, jsonSchema, plantuml];
+
+const FENCE_EXAMPLES = [
+  {
+    lang: 'mermaid',
+    handler: 'mermaid',
+    draws: 'mermaid.js, client-side',
+    note: 'Recognition only. The handler claims the language and stops — parsing a diagram whose whole value is its layout would be pretending. The renderer reads the format and hands the source to mermaid.',
+    body: `graph TD;
+  Intake[Email arrives] --> Filed{Already filed?};
+  Filed -- no --> Store[(Archive)];
+  Filed -- yes --> Skip[Skip];`,
+  },
+  {
+    lang: 'dot',
+    handler: 'graphviz',
+    draws: '@viz-js/viz (WASM), client-side',
+    note: 'Also recognition only, and claimed under both `graphviz` and `dot`. Layout is exactly the part a parser cannot do.',
+    body: `digraph filings {
+  rankdir=LR;
+  intake -> triage -> archive;
+  triage -> reject [style=dashed];
+}`,
+  },
+  {
+    lang: 'jsoncanvas',
+    handler: 'jsoncanvas',
+    draws: 'your canvas renderer',
+    note: 'The source is JSON, so parsing is free. Missing `nodes` / `edges` are normalized to empty arrays so renderers can skip the guards.',
+    body: `{
+  "nodes": [
+    { "id": "a", "type": "text", "text": "Intake", "x": 0, "y": 0, "width": 200, "height": 60 },
+    { "id": "b", "type": "text", "text": "Archive", "x": 300, "y": 0, "width": 200, "height": 60 }
+  ],
+  "edges": [{ "id": "e1", "fromNode": "a", "toNode": "b", "label": "filed" }]
+}`,
+  },
+  {
+    lang: 'vega-lite',
+    handler: 'vega-lite',
+    draws: 'vega-embed, client-side',
+    note: 'Parsed to a summary as well as the spec — mark, channels, data source, title. A chart that renders as nothing with JS off should at least be able to say what it was going to draw.',
+    body: `{
+  "title": "Filings per quarter",
+  "data": { "values": [
+    { "quarter": "Q1", "filings": 12 },
+    { "quarter": "Q2", "filings": 31 },
+    { "quarter": "Q3", "filings": 24 }
+  ]},
+  "mark": "bar",
+  "encoding": {
+    "x": { "field": "quarter", "type": "ordinal" },
+    "y": { "field": "filings", "type": "quantitative" }
+  }
+}`,
+  },
+  {
+    lang: 'yang',
+    handler: 'yang',
+    draws: 'nobody — the tree is the output',
+    note: 'Parsed all the way to an RFC 8340 tree diagram. The marker grammar is real: `mandatory` suppresses `?`, a leaf-list takes `*`, a presence container takes `!`, and `config false` propagates `ro` to its descendants.',
+    body: `module acme-system {
+  namespace "urn:acme:system";
+  prefix acme;
+  revision 2026-08-17;
+
+  container system {
+    leaf hostname { type string; mandatory true; }
+    leaf-list domain-search { type string; }
+    container ntp {
+      presence "enables ntp";
+      leaf enabled { type boolean; }
+    }
+    list interface {
+      key "name";
+      leaf name { type string; }
+      leaf speed { type uint32; config false; }
+    }
+  }
+}`,
+  },
+  {
+    lang: 'json-schema',
+    handler: 'json-schema',
+    draws: 'nobody — the tree is the output',
+    note: 'Also parsed to a tree. `$ref` targets are expanded inline rather than left dangling, enums render inline, and unions render as unions.',
+    body: `{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Portco Filing",
+  "type": "object",
+  "required": ["id", "status"],
+  "properties": {
+    "id": { "type": "string", "description": "Stable identifier" },
+    "status": { "enum": ["pending", "filed", "failed"] },
+    "attachments": { "type": "array", "items": { "$ref": "#/$defs/attachment" } },
+    "reviewer": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "attachment": {
+      "type": "object",
+      "properties": { "filename": { "type": "string" }, "bytes": { "type": "integer" } }
+    }
+  }
+}`,
+  },
+  {
+    lang: 'plantuml',
+    handler: 'plantuml',
+    draws: 'a PlantUML server, via <img>',
+    note: 'Deflated and encoded into a server URL — no Java, no local renderer. The `@startuml` wrapper is added when the author omits it. The default server is the public plantuml.com instance, which means your diagram source travels in the URL; `createPlantUml({ server })` points it at a self-hosted one.',
+    body: `Alice -> Bob: Filing request
+Bob --> Alice: Ack
+Bob -> Archive: store(pdf)`,
+  },
+];
+
+const fenceDemos = [];
+for (const ex of FENCE_EXAMPLES) {
+  const src = '```' + ex.lang + '\n' + ex.body + '\n```';
+  const tree = await parseMarkdown(src, { codeFences: { formats: FENCE_FORMATS } });
+  const node = find(tree, (n) => n.type === 'code')[0];
+  fenceDemos.push({ ...ex, src, fence: node.data.fence });
+}
+
+// Read the registry off the exports so the table can never drift from code.
+const registry = FENCE_FORMATS.map((f) => ({
+  name: f.name,
+  langs: f.match,
+  parses: typeof f.parse === 'function',
+}));
 
 // ─── 6. Wikilinks ─────────────────────────────────────────────────────────
 
@@ -155,7 +286,7 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
         <a href="#table-of-contents">Table of contents</a>
         <a href="#callouts">Callouts</a>
         <a href="#citations">Citations</a>
-        <a href="#code-fences">Code fences</a>
+        <a href="#code-fences">Diagram fences</a>
         <a href="#wikilinks">Wikilinks</a>
         <a href="#image-carousels">Carousels</a>
         <a href="#link-rollups">Link rollups</a>
@@ -229,14 +360,55 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
         result={citations}
       />
 
-      <PipelineDemo
-        title="Code fences"
-        plugin="remark-lfm-code-fences"
-        note="The registry ships empty — you pay for the formats you name. A handler may parse a fence or merely claim its language so a renderer can dispatch; a handler that throws records the error rather than failing your build."
-        source={fenceSrc}
-        resultLabel="code node's data.fence"
-        result={fence}
-      />
+      <div class="fences" id="code-fences">
+        <h2 class="fences__title">Code fences — every shipped handler</h2>
+        <p class="fences__lede">
+          The registry ships <strong>empty</strong>; you pay for the formats you name.
+          What a handler <em>does</em> depends entirely on who draws the diagram —
+          which is why some parse to a tree, some to a URL, and two deliberately
+          parse nothing at all.
+        </p>
+
+        <div class="fences__table-wrap">
+          <table class="fences__table">
+            <thead>
+              <tr><th>Handler</th><th>Claims</th><th>Parses?</th></tr>
+            </thead>
+            <tbody>
+              {registry.map((r) => (
+                <tr>
+                  <td><code>{r.name}</code></td>
+                  <td>{r.langs.map((l: string) => <code class="lang">{l}</code>)}</td>
+                  <td>{r.parses ? 'yes' : 'claims the language only'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {fenceDemos.map((d) => (
+          <PipelineDemo
+            title={d.handler}
+            plugin={`draws: ${d.draws}`}
+            note={d.note}
+            source={d.src}
+            resultLabel="code node's data.fence"
+            result={d.fence}
+          >
+            {d.fence.parsed?.tree && (
+              <pre slot="rendered" class="fences__tree"><code>{d.fence.parsed.tree}</code></pre>
+            )}
+            {d.fence.parsed?.svg && (
+              <p slot="rendered" class="fences__url">
+                The renderer emits an <code>&lt;img&gt;</code> pointing at{' '}
+                <a href={d.fence.parsed.svg} target="_blank" rel="noopener">this URL</a>{' '}
+                — detected kind: <code>{d.fence.parsed.kind ?? 'unknown'}</code>,
+                wrapper {d.fence.parsed.wrapped ? 'authored' : 'added for you'}.
+              </p>
+            )}
+          </PipelineDemo>
+        ))}
+      </div>
 
       <PipelineDemo
         title="Wikilinks"
@@ -316,6 +488,33 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
   .toc { margin: 0; padding-left: var(--space-5); }
   .toc ul { padding-left: var(--space-5); }
   .toc li { margin: var(--space-1) 0; }
+
+  .fences { margin-bottom: var(--space-10); }
+  .fences__title { margin: var(--space-8) 0 var(--space-2); }
+  .fences__lede { max-width: 62ch; color: var(--color-text-soft); }
+
+  .fences__table-wrap { overflow-x: auto; margin: var(--space-5) 0 var(--space-8); }
+  .fences__table { border-collapse: collapse; font-size: 0.9rem; min-width: 34rem; }
+  .fences__table th, .fences__table td {
+    text-align: left;
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .fences__table th { color: var(--color-text-dimmer); font-weight: 600; font-size: 0.78rem;
+    letter-spacing: 0.06em; text-transform: uppercase; }
+  .fences__table .lang + .lang { margin-left: var(--space-2); }
+
+  /* The tree diagrams are the output for yang / json-schema — monospace and
+     unwrapped, because column alignment carries the structure. */
+  .fences__tree {
+    margin: 0;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    white-space: pre;
+  }
+
+  .fences__url { margin: 0; font-size: 0.9rem; color: var(--color-text-soft); }
 
   .toc__eyebrow {
     display: block;
