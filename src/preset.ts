@@ -23,6 +23,7 @@ import { remarkCodeFences } from './plugins/remark-code-fences.js';
 import { remarkLosslessWikilinks } from './plugins/remark-lossless-wikilinks.js';
 import { remarkOgFetcher } from './plugins/og-fetcher.js';
 import { remarkLinkPreview } from './plugins/remark-link-preview.js';
+import { lfmImageCarousel } from './plugins/lfm-image-carousel.js';
 import type { RemarkLfmOptions } from './types/index.js';
 import type { Root } from 'mdast';
 import type { Plugin } from 'unified';
@@ -115,5 +116,14 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // to LinkPreviewCard / LinkRollup without re-walking children.
   if (opts.directives) {
     processor.use(remarkLinkPreview);
+  }
+
+  // Image-carousel annotation rides along with directives for the same reason
+  // as link-preview: it only touches `:::image-carousel` / `:::img-carousel`
+  // nodes, so it is inert on any document that contains none. It collapses the
+  // `img-carousel` alias and stamps `data.carousel` with extracted, ordered
+  // slides so renderers never re-walk children to find them.
+  if (opts.directives) {
+    processor.use(lfmImageCarousel);
   }
 };

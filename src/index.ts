@@ -56,6 +56,29 @@ export { remarkOgFetcher } from './plugins/og-fetcher.js';
 /** `:::link-preview` / `:::link-rollup` directive annotator — stamps `data.linkPreviewSpec`. */
 export { remarkLinkPreview } from './plugins/remark-link-preview.js';
 
+/** `:::image-carousel` / `:::img-carousel` normalizer — collapses the alias,
+ *  extracts slides, and orders sequence variants by their filename timestamp. */
+export {
+  lfmImageCarousel,
+  parseImageStamp,
+  sortSlides,
+  collectCarouselSlides,
+  CAROUSEL_VARIANTS,
+  SEQUENCE_VARIANTS,
+  DEFAULT_CAROUSEL_VARIANT,
+} from './plugins/lfm-image-carousel.js';
+
+export type {
+  /** Payload attached to `containerDirective.data.carousel`. */
+  CarouselData,
+  /** One slide, with its parsed `capturedAt` and preserved `authoredIndex`. */
+  CarouselSlide,
+  /** Variant taxonomy for `ImageCarousel--*` components. */
+  CarouselVariant,
+  /** Ordering policy — chronological (default for sequence variants), reverse, or authored. */
+  CarouselSort,
+} from './plugins/lfm-image-carousel.js';
+
 /** URL classifier — turns a raw URL into provider/kind metadata via the catalog matchers. */
 export { classifyLink, getBareLinkUrl, collectLinkNodes } from './utils/classify-link.js';
 
