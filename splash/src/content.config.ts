@@ -234,6 +234,32 @@ const featureHighlights = defineCollection({
     .passthrough(),
 });
 
+/**
+ * Worked examples for /demo. Real markdown files on disk, parsed at build time
+ * by the real pipeline — so the page reads a document rather than a string
+ * literal, and the same files double as the fixtures in test/demo-fixtures.test.mjs.
+ */
+const lfmDemos = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/lfm-demos' }),
+  schema: z
+    .object({
+      title: lenientString,
+      /** `feature` (a plugin) or `fence` (a diagram language). */
+      kind: lenientString,
+      /** Byline: which plugin produced the payload. */
+      plugin: lenientString,
+      /** Fence demos: the handler name it should resolve to. */
+      handler: lenientString,
+      /** Fence demos: who does the drawing. */
+      draws: lenientString,
+      /** Label for the payload pane. */
+      result_label: lenientString,
+      note: lenientString,
+      order: lenientNumber,
+    })
+    .passthrough(),
+});
+
 const stcExampleSchema = z
   .object({
     title: lenientString,
@@ -281,6 +307,7 @@ const contextV = defineCollection({
 export const collections = {
   'feature-highlights': featureHighlights,
   'stc-examples': stcExamples,
+  'lfm-demos': lfmDemos,
   changelog,
   'context-v': contextV,
 };

@@ -13,7 +13,9 @@
  * demo can additionally show one plausible rendering of it.
  */
 interface Props {
-  /** Feature name — also the anchor target. */
+  /** Anchor target. Defaults to a slug of the title. */
+  id?: string;
+  /** Feature name. */
   title: string;
   /** Which plugin produced this, for the byline. */
   plugin: string;
@@ -27,9 +29,9 @@ interface Props {
   result: unknown;
 }
 
-const { title, plugin, note, source, resultLabel = 'What the pipeline attached', result } = Astro.props;
+const { id: idProp, title, plugin, note, source, resultLabel = 'What the pipeline attached', result } = Astro.props;
 
-const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const id = idProp ?? title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 /** Maps and Dates don't survive JSON.stringify usefully. */
 const pretty = JSON.stringify(

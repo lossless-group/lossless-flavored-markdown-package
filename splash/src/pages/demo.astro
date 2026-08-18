@@ -2,12 +2,18 @@
 /**
  * Live feature demo.
  *
- * Every payload on this page is produced at build time by calling the real
- * `parseMarkdown` against the markdown shown beside it. Nothing here is
- * hand-written illustration, which means the page doubles as an integration
- * test: if a plugin regresses, this page shows the regression, and if a plugin
- * throws, the splash build fails.
+ * Every example on this page is a **real markdown file** in
+ * `src/content/lfm-demos/`, loaded as a content collection and run through the
+ * real `parseMarkdown` at build time. Nothing is a string literal in this file
+ * and nothing is hand-written illustration, which matters for two reasons:
+ * the examples are editable by anyone without touching a page, and the page
+ * exercises the actual authoring path — a document on disk going through the
+ * pipeline — rather than a string that skips it.
+ *
+ * The same files are the fixtures in `test/demo-fixtures.test.mjs`, so a
+ * change to an example is checked by the suite as well as rendered here.
  */
+import { getCollection } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PipelineDemo from '@components/PipelineDemo.astro';
 import '@styles/mermaid.css';
@@ -15,7 +21,7 @@ import { parseMarkdown, nestHeadings, filterHeadings } from '../../../src/index.
 import { mermaid, graphviz, jsonCanvas, vegaLite, yang, jsonSchema } from '../../../src/formats/index.ts';
 import { plantuml } from '../../../src/formats/plantuml.ts';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+const FENCE_FORMATS = [mermaid, graphviz, jsonCanvas, vegaLite, yang, jsonSchema, plantuml];
 
 const find = (node: any, pred: (n: any) => boolean, out: any[] = []): any[] => {
   for (const child of node?.children ?? []) {
@@ -25,272 +31,97 @@ const find = (node: any, pred: (n: any) => boolean, out: any[] = []): any[] => {
   return out;
 };
 const directive = (tree: any, name: string) =>
-  find(tree, (n) => n.type === 'containerDirective' && n.name === name)[0];
+  find(tree, (n: any) => n.type === 'containerDirective' && n.name === name)[0];
 
-// ─── 1. Eyebrow / heading / subheading ────────────────────────────────────
-
-const headingBlockSrc = `$$ Portfolio Operations
-## Every email from a portco, filed as PDFs
-&& Two passes, inventory before export — so you can verify coverage`;
-
-const headingBlockTree = await parseMarkdown(headingBlockSrc);
-const headingBlockNode = directive(headingBlockTree, 'heading-block');
-const headingBlock = {
-  hName: headingBlockNode.data.hName,
-  hProperties: headingBlockNode.data.hProperties,
-  headingBlock: headingBlockNode.data.headingBlock,
-};
-const headingBlockOutline = headingBlockTree.data.headings;
-
-// ─── 2. Table of contents ─────────────────────────────────────────────────
-
-const tocSrc = `# Filing portco email
-
-$$ Inbox
-## Why Care?
-### The volume problem
-
-> [!warning] Rate limits
-> ### Not a section
-
-## What's New?
-#### A deep one`;
-
-const tocTree = await parseMarkdown(tocSrc);
-const tocOutline = tocTree.data.headings;
-const toc = nestHeadings(filterHeadings(tocOutline, 2, 4).filter((h: any) => !h.inContainer));
-
-// ─── 3. Callouts ──────────────────────────────────────────────────────────
-
-const calloutSrc = `> [!warning] The category churns
-> Half the tools on this list will be renamed by spring.`;
-const calloutTree = await parseMarkdown(calloutSrc);
-const calloutNode = directive(calloutTree, 'callout');
-const callout = {
-  name: calloutNode.name,
-  attributes: calloutNode.attributes,
-  data: calloutNode.data,
+/**
+ * What to show in the payload pane, per demo.
+ *
+ * The markdown lives in files; this stays in code, because *which* slice of the
+ * tree is interesting genuinely differs per feature and is not something
+ * frontmatter should be pretending to express.
+ */
+const PAYLOAD: Record<string, (tree: any) => unknown> = {
+  'eyebrow-heading-subheading': (t) => {
+    const n = directive(t, 'heading-block');
+    return { hName: n.data.hName, hProperties: n.data.hProperties, headingBlock: n.data.headingBlock };
+  },
+  'table-of-contents': (t) => t.data.headings,
+  callouts: (t) => {
+    const n = directive(t, 'callout');
+    return { name: n.name, attributes: n.attributes, data: n.data };
+  },
+  citations: (t) => t.data.citations.ordered.map((c: any) => ({
+    index: c.index, identifier: c.identifier, title: c.title,
+    source: c.source, publishedDate: c.publishedDate,
+  })),
+  'image-carousel': (t) => directive(t, 'image-carousel').data.carousel,
+  'link-rollup': (t) => directive(t, 'link-rollup').data.linkPreviewSpec,
 };
 
-// ─── 4. Citations ─────────────────────────────────────────────────────────
+const entries = (await getCollection('lfm-demos'))
+  .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
 
-const citationSrc = `Adoption stalled in Q2.[^b2d4f8] Spend kept climbing.[^7c1e0a]
+const demos = [];
+for (const entry of entries) {
+  const source = entry.body.trim();
+  const tree = await parseMarkdown(source, { codeFences: { formats: FENCE_FORMATS } });
 
-[^7c1e0a]: [The First Source](https://example.com/first) Published: 2026-01-15
-[^b2d4f8]: [The Second Source](https://other.org/second)`;
-const citationTree = await parseMarkdown(citationSrc);
-const citations = citationTree.data.citations.ordered.map((c: any) => ({
-  index: c.index,
-  identifier: c.identifier,
-  title: c.title,
-  source: c.source,
-  publishedDate: c.publishedDate,
-}));
-
-// ─── 5. Code fences — every shipped handler ───────────────────────────────
-// One fence per diagram language, each run through the real registry. The
-// point of the section is that "support a diagram language" means four
-// different things depending on who does the drawing.
-
-const FENCE_FORMATS = [mermaid, graphviz, jsonCanvas, vegaLite, yang, jsonSchema, plantuml];
-
-const FENCE_EXAMPLES = [
-  {
-    lang: 'mermaid',
-    handler: 'mermaid',
-    draws: 'mermaid.js, client-side',
-    note: 'Recognition only. The handler claims the language and stops — parsing a diagram whose whole value is its layout would be pretending. The renderer reads the format and hands the source to mermaid.',
-    body: `graph TD;
-  Intake[Email arrives] --> Filed{Already filed?};
-  Filed -- no --> Store[(Archive)];
-  Filed -- yes --> Skip[Skip];`,
-  },
-  {
-    lang: 'dot',
-    handler: 'graphviz',
-    draws: '@viz-js/viz (WASM), client-side',
-    note: 'Also recognition only, and claimed under both `graphviz` and `dot`. Layout is exactly the part a parser cannot do.',
-    body: `digraph filings {
-  rankdir=LR;
-  intake -> triage -> archive;
-  triage -> reject [style=dashed];
-}`,
-  },
-  {
-    lang: 'jsoncanvas',
-    handler: 'jsoncanvas',
-    draws: 'your canvas renderer',
-    note: 'The source is JSON, so parsing is free. Missing `nodes` / `edges` are normalized to empty arrays so renderers can skip the guards.',
-    body: `{
-  "nodes": [
-    { "id": "a", "type": "text", "text": "Intake", "x": 0, "y": 0, "width": 200, "height": 60 },
-    { "id": "b", "type": "text", "text": "Archive", "x": 300, "y": 0, "width": 200, "height": 60 }
-  ],
-  "edges": [{ "id": "e1", "fromNode": "a", "toNode": "b", "label": "filed" }]
-}`,
-  },
-  {
-    lang: 'vega-lite',
-    handler: 'vega-lite',
-    draws: 'vega-embed, client-side',
-    note: 'Parsed to a summary as well as the spec — mark, channels, data source, title. A chart that renders as nothing with JS off should at least be able to say what it was going to draw.',
-    body: `{
-  "title": "Filings per quarter",
-  "data": { "values": [
-    { "quarter": "Q1", "filings": 12 },
-    { "quarter": "Q2", "filings": 31 },
-    { "quarter": "Q3", "filings": 24 }
-  ]},
-  "mark": "bar",
-  "encoding": {
-    "x": { "field": "quarter", "type": "ordinal" },
-    "y": { "field": "filings", "type": "quantitative" }
+  let result: unknown;
+  let fence: any = null;
+  if (entry.data.kind === 'fence') {
+    fence = find(tree, (n: any) => n.type === 'code')[0].data.fence;
+    result = fence;
+  } else {
+    result = PAYLOAD[entry.id]?.(tree) ?? null;
   }
-}`,
-  },
-  {
-    lang: 'yang',
-    handler: 'yang',
-    draws: 'nobody — the tree is the output',
-    note: 'Parsed all the way to an RFC 8340 tree diagram. The marker grammar is real: `mandatory` suppresses `?`, a leaf-list takes `*`, a presence container takes `!`, and `config false` propagates `ro` to its descendants.',
-    body: `module acme-system {
-  namespace "urn:acme:system";
-  prefix acme;
-  revision 2026-08-17;
 
-  container system {
-    leaf hostname { type string; mandatory true; }
-    leaf-list domain-search { type string; }
-    container ntp {
-      presence "enables ntp";
-      leaf enabled { type boolean; }
-    }
-    list interface {
-      key "name";
-      leaf name { type string; }
-      leaf speed { type uint32; config false; }
-    }
-  }
-}`,
-  },
-  {
-    lang: 'json-schema',
-    handler: 'json-schema',
-    draws: 'nobody — the tree is the output',
-    note: 'Also parsed to a tree. `$ref` targets are expanded inline rather than left dangling, enums render inline, and unions render as unions.',
-    body: `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Portco Filing",
-  "type": "object",
-  "required": ["id", "status"],
-  "properties": {
-    "id": { "type": "string", "description": "Stable identifier" },
-    "status": { "enum": ["pending", "filed", "failed"] },
-    "attachments": { "type": "array", "items": { "$ref": "#/$defs/attachment" } },
-    "reviewer": { "type": ["string", "null"] }
-  },
-  "$defs": {
-    "attachment": {
-      "type": "object",
-      "properties": { "filename": { "type": "string" }, "bytes": { "type": "integer" } }
-    }
-  }
-}`,
-  },
-  {
-    lang: 'plantuml',
-    handler: 'plantuml',
-    draws: 'a PlantUML server, via <img>',
-    note: 'Deflated and encoded into a server URL — no Java, no local renderer. The `@startuml` wrapper is added when the author omits it. The default server is the public plantuml.com instance, which means your diagram source travels in the URL; `createPlantUml({ server })` points it at a self-hosted one.',
-    body: `Alice -> Bob: Filing request
-Bob --> Alice: Ack
-Bob -> Archive: store(pdf)`,
-  },
-];
-
-const fenceDemos = [];
-for (const ex of FENCE_EXAMPLES) {
-  const src = '```' + ex.lang + '\n' + ex.body + '\n```';
-  const tree = await parseMarkdown(src, { codeFences: { formats: FENCE_FORMATS } });
-  const node = find(tree, (n) => n.type === 'code')[0];
-  fenceDemos.push({ ...ex, src, fence: node.data.fence });
+  demos.push({ entry, source, tree, result, fence });
 }
+
+/** The table-of-contents demo renders an actual ToC from its own outline. */
+const tocDemo = demos.find((d) => d.entry.id === 'table-of-contents');
+const toc = tocDemo
+  ? nestHeadings(filterHeadings(tocDemo.tree.data.headings, 2, 4).filter((h: any) => !h.inContainer))
+  : [];
+
+/** The heading-block demo renders its own hgroup from the parsed payload. */
+const hb = demos.find((d) => d.entry.id === 'eyebrow-heading-subheading');
+const headingBlockText = hb ? find(hb.tree, (n: any) => n.type === 'heading')[0].data.headingText : '';
+
+/** JSON Canvas geometry, for the dependency-free SVG below. */
+const canvasDemo = demos.find((d) => d.entry.id === 'fence-jsoncanvas');
 
 // Read the registry off the exports so the table can never drift from code.
 const registry = FENCE_FORMATS.map((f) => ({
-  name: f.name,
-  langs: f.match,
-  parses: typeof f.parse === 'function',
+  name: f.name, langs: f.match, parses: typeof f.parse === 'function',
 }));
 
-// ─── 6. Wikilinks ─────────────────────────────────────────────────────────
-
-const wikilinkSrc = `See [[concepts/Naming Conventions|the naming rule]] and [[Nowhere/Missing]].`;
-const wikilinkTree = await parseMarkdown(wikilinkSrc, {
-  wikilinks: {
-    resolver: (input: any) =>
-      input.path.startsWith('concepts/')
-        ? {
-            url: `/concepts/${input.path.split('/').pop().toLowerCase().replace(/\s+/g, '-')}`,
-            isLocal: true,
-            display: input.display ?? input.path.split('/').pop(),
-          }
-        : null,
-  },
-});
-const wikilinks = find(wikilinkTree, (n: any) => n.type === 'link').map((l: any) => ({
-  url: l.url,
-  class: l.data?.hProperties?.class,
-}));
-
-// ─── 7. Image carousel ────────────────────────────────────────────────────
-
-const carouselSrc = `:::image-carousel{variant="stepper" title="Setting up Aside"}
-::image{src="/Aside__Welcome_20260817T164659Z.jpg" alt="Welcome screen" label="Welcome"}
-::image{src="/Aside__Recovery_20260817T164659Z.jpg" alt="Recovery key" label="Recovery key"}
-:::`;
-const carouselTree = await parseMarkdown(carouselSrc);
-const carousel = directive(carouselTree, 'image-carousel').data.carousel;
-
-// ─── 8. Link preview ──────────────────────────────────────────────────────
-
-const previewSrc = `:::link-rollup{format="gallery" columns="2"}
-- https://www.youtube.com/watch?v=dQw4w9WgXcQ
-- https://example.com/article
-:::`;
-const previewTree = await parseMarkdown(previewSrc);
-const previewSpec = directive(previewTree, 'link-rollup').data.linkPreviewSpec;
-
-const pageTitle = 'Live demo — every feature, parsed at build time';
+const featureDemos = demos.filter((d) => d.entry.data.kind !== 'fence');
+const fenceDemos = demos.filter((d) => d.entry.data.kind === 'fence');
 ---
 
 <BaseLayout
-  title={pageTitle}
-  description="Authored markdown on the left, the payload LFM actually returned on the right — every value computed at build time by the real pipeline."
+  title="Live demo — every feature, parsed at build time"
+  description="Real markdown files on the left, the payload LFM actually returned on the right — every value computed at build time by the real pipeline."
 >
   <section class="intro">
     <div class="container">
       <p class="folio" data-num="§">Demo</p>
       <h1>Every feature, parsed at build time</h1>
       <p class="intro__lede">
-        Markdown on the left. On the right, what <code>parseMarkdown</code> actually
-        handed back when this page was built — not an illustration of it.
+        Each example is a markdown file in <code>src/content/lfm-demos/</code>.
+        On the right is what <code>parseMarkdown</code> handed back when this
+        page was built — not an illustration of it.
       </p>
       <p class="intro__note">
         LFM returns an <strong>AST, not HTML</strong>. Deciding what a reader sees
         belongs to the render layer, and this splash is one render layer among
-        many — so the payload is the honest thing to show. Where a rendering
-        makes the point better, it sits underneath.
+        many — so the payload is the honest thing to show, with a rendering
+        underneath wherever it makes the point better. The same files are the
+        fixtures the test suite runs against.
       </p>
       <nav class="intro__jump" aria-label="Jump to a feature">
-        <a href="#eyebrow-heading-subheading">Eyebrow blocks</a>
-        <a href="#table-of-contents">Table of contents</a>
-        <a href="#callouts">Callouts</a>
-        <a href="#citations">Citations</a>
-        <a href="#code-fences">Diagram fences</a>
-        <a href="#wikilinks">Wikilinks</a>
-        <a href="#image-carousels">Carousels</a>
-        <a href="#link-rollups">Link rollups</a>
+        {demos.map((d) => <a href={`#${d.entry.id}`}>{d.entry.data.title}</a>)}
       </nav>
     </div>
   </section>
@@ -298,68 +129,46 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
   <section class="demos">
     <div class="container">
 
-      <PipelineDemo
-        title="Eyebrow, heading, subheading"
-        plugin="lfm-heading-blocks"
-        note="Markdown gives you one line where editorial practice has always used three. $$ and && bind by adjacency to the heading between them — a blank line breaks the binding and the markers revert to ordinary text."
-        source={headingBlockSrc}
-        result={headingBlock}
-      >
-        <hgroup slot="rendered" class="heading-block">
-          <p class="heading-block-eyebrow eyebrow">{headingBlock.headingBlock.eyebrow}</p>
-          <h2>Every email from a portco, filed as PDFs</h2>
-          {headingBlock.headingBlock.subheadings.map((s: string) => (
-            <p class="heading-block-subheading subheading">{s}</p>
-          ))}
-        </hgroup>
-      </PipelineDemo>
+      {featureDemos.map((d) => (
+        <PipelineDemo
+          id={d.entry.id}
+          title={d.entry.data.title}
+          plugin={d.entry.data.plugin}
+          note={d.entry.data.note}
+          source={d.source}
+          resultLabel={d.entry.data.result_label}
+          result={d.result}
+        >
+          {d.entry.id === 'eyebrow-heading-subheading' && (
+            <hgroup slot="rendered" class="heading-block">
+              <p class="heading-block-eyebrow eyebrow">{(d.result as any).headingBlock.eyebrow}</p>
+              <h2>{headingBlockText}</h2>
+              {(d.result as any).headingBlock.subheadings.map((sub: string) => (
+                <p class="heading-block-subheading subheading">{sub}</p>
+              ))}
+            </hgroup>
+          )}
 
-      <PipelineDemo
-        title="Table of contents"
-        plugin="remark-lfm-heading-ids"
-        note="Every heading gets a stable, deduped anchor — including the one inside that callout, because a share link into a callout is a link like any other. inContainer is what lets a ToC leave it out without losing the anchor."
-        source={tocSrc}
-        resultLabel="tree.data.headings"
-        result={tocOutline}
-      >
-        <div slot="rendered">
-          <p class="toc__caption">
-            <code>nestHeadings(filterHeadings(outline, 2, 4).filter(h =&gt; !h.inContainer))</code>
-          </p>
-          <ul class="toc">
-            {toc.map((node: any) => (
-              <li>
-                {node.eyebrow && <span class="toc__eyebrow">{node.eyebrow}</span>}
-                <a href={`#${node.id}`}>{node.text}</a>
-                {node.children.length > 0 && (
-                  <ul>
-                    {node.children.map((child: any) => (
-                      <li><a href={`#${child.id}`}>{child.text}</a></li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </PipelineDemo>
-
-      <PipelineDemo
-        title="Callouts"
-        plugin="remark-lfm-callouts"
-        note="An Obsidian callout and a :::callout{type=&quot;warning&quot;} directive produce the same node, so your component renders one shape regardless of which tool wrote the file."
-        source={calloutSrc}
-        result={callout}
-      />
-
-      <PipelineDemo
-        title="Citations"
-        plugin="remark-lfm-citations"
-        note="Authors write stable, meaningless hex ids so inserting a source mid-document renumbers nothing. The sequential index is assigned at build time, by order of first appearance — note the second-defined source is citation 1."
-        source={citationSrc}
-        resultLabel="tree.data.citations.ordered"
-        result={citations}
-      />
+          {d.entry.id === 'table-of-contents' && (
+            <div slot="rendered">
+              <p class="toc__caption">
+                <code>nestHeadings(filterHeadings(outline, 2, 4).filter(h =&gt; !h.inContainer))</code>
+              </p>
+              <ul class="toc">
+                {toc.map((node: any) => (
+                  <li>
+                    {node.eyebrow && <span class="toc__eyebrow">{node.eyebrow}</span>}
+                    <a href={`#${node.id}`}>{node.text}</a>
+                    {node.children.length > 0 && (
+                      <ul>{node.children.map((c: any) => <li><a href={`#${c.id}`}>{c.text}</a></li>)}</ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </PipelineDemo>
+      ))}
 
       <div class="fences" id="code-fences">
         <h2 class="fences__title">Code fences — every shipped handler</h2>
@@ -372,9 +181,7 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
 
         <div class="fences__table-wrap">
           <table class="fences__table">
-            <thead>
-              <tr><th>Handler</th><th>Claims</th><th>Parses?</th></tr>
-            </thead>
+            <thead><tr><th>Handler</th><th>Claims</th><th>Parses?</th></tr></thead>
             <tbody>
               {registry.map((r) => (
                 <tr>
@@ -389,21 +196,20 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
 
         {fenceDemos.map((d) => (
           <PipelineDemo
-            title={d.handler}
-            plugin={`draws: ${d.draws}`}
-            note={d.note}
-            source={d.src}
-            resultLabel="code node's data.fence"
-            result={d.fence}
+            id={d.entry.id}
+            title={d.entry.data.title}
+            plugin={`draws: ${d.entry.data.draws}`}
+            note={d.entry.data.note}
+            source={d.source}
+            resultLabel={d.entry.data.result_label}
+            result={d.result}
           >
             <div slot="rendered" class="fences__out">
-              {/* yang + json-schema: the tree IS the output, no renderer needed. */}
-              {d.fence.parsed?.tree && (
+              {d.fence?.parsed?.tree && (
                 <pre class="fences__tree"><code>{d.fence.parsed.tree}</code></pre>
               )}
 
-              {/* plantuml: a server drew it. Zero JS — just an <img>. */}
-              {d.fence.parsed?.svg && (
+              {d.fence?.parsed?.svg && (
                 <>
                   <img class="fences__img" src={d.fence.parsed.svg}
                        alt={`PlantUML ${d.fence.parsed.kind ?? ''} diagram, rendered by the PlantUML server`}
@@ -417,28 +223,23 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
                 </>
               )}
 
-              {/* The three that need a client renderer. LFM hands over the
-                  source or the spec and stops; these mounts are the render
-                  layer doing its half, loaded per-page rather than site-wide. */}
-              {d.handler === 'mermaid' && (
-                <div class="fences__mount mermaid" data-mermaid={d.body}>
+              {d.entry.data.handler === 'mermaid' && (
+                <div class="fences__mount mermaid" data-mermaid={d.tree.children[0].value}>
                   <p class="fences__pending">Rendering with mermaid.js…</p>
                 </div>
               )}
-              {d.handler === 'graphviz' && (
-                <div class="fences__mount" data-dot={d.body}>
+              {d.entry.data.handler === 'graphviz' && (
+                <div class="fences__mount" data-dot={d.tree.children[0].value}>
                   <p class="fences__pending">Rendering with @viz-js/viz…</p>
                 </div>
               )}
-              {d.handler === 'vega-lite' && (
+              {d.entry.data.handler === 'vega-lite' && (
                 <div class="fences__mount" data-vega={JSON.stringify(d.fence.parsed.spec)}>
                   <p class="fences__pending">Rendering with vega-embed…</p>
                 </div>
               )}
 
-              {/* json canvas: nodes carry x/y/w/h, so a plain SVG needs no
-                  library at all. Proves the parsed payload is sufficient. */}
-              {d.handler === 'jsoncanvas' && (() => {
+              {d.entry.data.handler === 'jsoncanvas' && (() => {
                 const ns = d.fence.parsed.nodes;
                 const pad = 20;
                 const maxX = Math.max(...ns.map((n: any) => n.x + n.width)) + pad;
@@ -473,33 +274,6 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
         ))}
       </div>
 
-      <PipelineDemo
-        title="Wikilinks"
-        plugin="remark-lfm-wikilinks"
-        note="Destinations are per-site, so the package ships no resolver and the plugin stays off until you supply one. An unresolved link degrades to plain display text — a reader never sees raw brackets."
-        source={wikilinkSrc}
-        resultLabel="resolved link nodes (the second stayed text)"
-        result={wikilinks}
-      />
-
-      <PipelineDemo
-        title="Image carousels"
-        plugin="lfm-image-carousel"
-        note="Slides extracted, the img-carousel alias collapsed, and order resolved. Sequence variants sort chronologically by the stamp in the filename — and the sort is stable, because that stamp marks a prep run rather than a capture."
-        source={carouselSrc}
-        resultLabel="containerDirective data.carousel"
-        result={carousel}
-      />
-
-      <PipelineDemo
-        title="Link rollups"
-        plugin="lfm-link-preview"
-        note="Attributes parsed, URLs collected in document order and deduped, each link classified against the provider catalog. No network call happens here — fetching is the og-fetcher's job, and only when you enable it."
-        source={previewSrc}
-        resultLabel="containerDirective data.linkPreviewSpec"
-        result={previewSpec}
-      />
-
     </div>
   </section>
 </BaseLayout>
@@ -532,9 +306,9 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
   };
 
   // ── mermaid ──────────────────────────────────────────────────────────────
-  // Mermaid is not unstyled by default — it inlines a <style> into every SVG,
-  // generated from `themeVariables`. Feeding it the site's design tokens is
-  // what makes a diagram belong here rather than look imported. See
+  // Mermaid is not unstyled by default: it injects its own stylesheet into
+  // every generated SVG from `themeVariables`. Feeding it the site's design
+  // tokens is what makes a diagram belong here rather than look imported. See
   // src/lib/mermaid-theme.ts for the full reasoning.
   //
   // It also bakes that stylesheet in at render time, so a mode toggle cannot
