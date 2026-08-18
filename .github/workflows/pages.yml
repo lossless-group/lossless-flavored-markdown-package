@@ -62,7 +62,7 @@ jobs:
           OPENPANEL_CLIENT_ID: ${{ vars.OPENPANEL_CLIENT_ID }}
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
         with:
           # Auto-enable Pages on first run so the workflow bootstraps itself
           # even when "Get Pages site" returns 404 the very first time.
