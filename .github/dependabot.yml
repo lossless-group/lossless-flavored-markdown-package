@@ -1,0 +1,33 @@
+# Keep the GitHub Actions current without anyone having to remember.
+#
+# Every `uses:` line is a pinned external dependency, and nothing about writing
+# a workflow prompts you to check whether the version you typed is the current
+# one. Both workflows here shipped on actions/checkout@v4 and setup-node@v4 —
+# three majors behind — because they were copied from an older sibling file and
+# nobody looked. The cost was a deprecation warning on every run and, when the
+# bump finally happened, a red deploy.
+#
+# Dependabot opens a PR when a new major appears. It consumes no CI minutes of
+# its own; the PR it opens runs the normal workflows, which is exactly the
+# verification a version bump wants.
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      # Monthly, deliberately. These actions cut a major roughly once a year,
+      # so a weekly cadence is noise — and a bot that gets ignored is worse
+      # than no bot, because it looks like coverage.
+      interval: monthly
+    commit-message:
+      prefix: ci
+    labels:
+      - ci
+    open-pull-requests-limit: 3
+
+# Deliberately not enabling the npm ecosystem here. The package has four
+# runtime dependencies pinned to majors and the splash is private, so the
+# signal-to-noise is poor and a lockfile bump wants a human deciding when.
+# `site/` already runs a weekly pnpm audit for the security case, which is the
+# part that actually needs to be automatic.
