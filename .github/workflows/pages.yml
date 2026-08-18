@@ -41,6 +41,15 @@ jobs:
           cache: pnpm
           cache-dependency-path: splash/pnpm-lock.yaml
 
+      # The splash imports the package's *source* (../../../src/index.ts), so
+      # bare imports inside src/ resolve from the repo root's node_modules, not
+      # the splash's. Installing the package's dependencies is therefore part of
+      # building the site — it just looked optional locally, where a developer
+      # always has both installed.
+      - name: Install package deps (splash compiles package source)
+        working-directory: .
+        run: pnpm install --frozen-lockfile=false --ignore-workspace
+
       - name: Install
         run: pnpm install --frozen-lockfile=false --ignore-workspace
 
