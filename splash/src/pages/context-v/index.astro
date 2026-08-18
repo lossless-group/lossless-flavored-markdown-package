@@ -22,8 +22,8 @@ for (const entry of entries) {
 // already be in default order so the page reads correctly with JS off / mid-hydrate.
 for (const arr of groups.values()) {
   arr.sort((a, b) => {
-    const am = toDate(a.data.date_modified ?? a.data.date_updated ?? a.data.date_created ?? a.data.date_authored_current_draft ?? a.data.date_authored_initial_draft);
-    const bm = toDate(b.data.date_modified ?? b.data.date_updated ?? b.data.date_created ?? b.data.date_authored_current_draft ?? b.data.date_authored_initial_draft);
+    const am = toDate(a.data.date_modified ?? a.data.date_updated ?? a.data.date_created ?? a.data.date_authored_current_draft ?? a.data.date_authored_initial_draft ?? a.data.date_authored_current_draft ?? a.data.date_authored_initial_draft ?? a.data.date_authored_current_draft ?? a.data.date_authored_initial_draft);
+    const bm = toDate(b.data.date_modified ?? b.data.date_updated ?? b.data.date_created ?? b.data.date_authored_current_draft ?? b.data.date_authored_initial_draft ?? b.data.date_authored_current_draft ?? b.data.date_authored_initial_draft ?? b.data.date_authored_current_draft ?? b.data.date_authored_initial_draft);
     const ta = am ? am.getTime() : 0;
     const tb = bm ? bm.getTime() : 0;
     if (tb !== ta) return tb - ta;
