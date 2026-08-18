@@ -1,0 +1,82 @@
+/**
+ * Mermaid — the second half of the styling story.
+ *
+ * The first half is `src/lib/mermaid-theme.ts`, which feeds design tokens into
+ * `themeVariables` so Mermaid *generates* its inline stylesheet from your
+ * palette. Do that first. It covers colors, fonts and the diagram-specific
+ * fills, and it survives Mermaid upgrades because you are using its own API.
+ *
+ * This file is for what themeVariables has no variable for — and because
+ * Mermaid inlines a `<style>` element inside every generated `<svg>`, every
+ * rule here has to out-specify it. Hence the `.mermaid svg` prefixes rather
+ * than bare element selectors. Keep it small; anything expressible as a theme
+ * variable belongs in the TS file, not here.
+ *
+ * Wrap a rendered diagram in `.mermaid` for these to apply.
+ */
+
+.mermaid {
+  /* Diagrams are wide before they are tall. Let the container scroll rather
+     than the page. */
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-inline: auto;
+}
+
+/* Mermaid draws edges at 1px regardless of theme, which disappears against a
+   soft background on a high-DPI display. */
+.mermaid svg .flowchart-link,
+.mermaid svg .messageLine0,
+.mermaid svg .messageLine1 {
+  stroke-width: 1.6px;
+}
+
+/* Node borders get the same treatment — themeVariables sets the colour, not
+   the weight. */
+.mermaid svg .node rect,
+.mermaid svg .node circle,
+.mermaid svg .node polygon,
+.mermaid svg .node path {
+  stroke-width: 1.4px;
+}
+
+/* Cluster (subgraph) frames read better dashed — no theme variable for this. */
+.mermaid svg .cluster rect {
+  stroke-dasharray: 4 3;
+}
+
+/* Labels inherit the site font through themeVariables, but Mermaid hardcodes
+   its own line-height in a few places. */
+.mermaid svg .nodeLabel,
+.mermaid svg .edgeLabel,
+.mermaid svg .messageText {
+  line-height: 1.35;
+}
+
+/* Edge labels sit on the line. themeVariables.edgeLabelBackground paints the
+   rect; this stops the text from hugging its edges. */
+.mermaid svg .edgeLabel foreignObject > div {
+  padding: 0 0.25rem;
+}
+
+/* Print: diagrams are usually the point of the page they're on, so don't let
+   one break across a page. */
+@media print {
+  .mermaid { break-inside: avoid; overflow-x: visible; }
+  .mermaid svg { max-width: 100%; }
+}
+
+/* Reduced motion: Mermaid animates nothing by default, but some diagram types
+   (gitGraph, journey) ship transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .mermaid svg * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

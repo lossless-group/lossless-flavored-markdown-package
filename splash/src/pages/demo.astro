@@ -10,6 +10,7 @@
  */
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PipelineDemo from '@components/PipelineDemo.astro';
+import '@styles/mermaid.css';
 import { parseMarkdown, nestHeadings, filterHeadings } from '../../../src/index.ts';
 import { mermaid, graphviz, jsonCanvas, vegaLite, yang, jsonSchema } from '../../../src/formats/index.ts';
 import { plantuml } from '../../../src/formats/plantuml.ts';
@@ -395,17 +396,79 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
             resultLabel="code node's data.fence"
             result={d.fence}
           >
-            {d.fence.parsed?.tree && (
-              <pre slot="rendered" class="fences__tree"><code>{d.fence.parsed.tree}</code></pre>
-            )}
-            {d.fence.parsed?.svg && (
-              <p slot="rendered" class="fences__url">
-                The renderer emits an <code>&lt;img&gt;</code> pointing at{' '}
-                <a href={d.fence.parsed.svg} target="_blank" rel="noopener">this URL</a>{' '}
-                — detected kind: <code>{d.fence.parsed.kind ?? 'unknown'}</code>,
-                wrapper {d.fence.parsed.wrapped ? 'authored' : 'added for you'}.
-              </p>
-            )}
+            <div slot="rendered" class="fences__out">
+              {/* yang + json-schema: the tree IS the output, no renderer needed. */}
+              {d.fence.parsed?.tree && (
+                <pre class="fences__tree"><code>{d.fence.parsed.tree}</code></pre>
+              )}
+
+              {/* plantuml: a server drew it. Zero JS — just an <img>. */}
+              {d.fence.parsed?.svg && (
+                <>
+                  <img class="fences__img" src={d.fence.parsed.svg}
+                       alt={`PlantUML ${d.fence.parsed.kind ?? ''} diagram, rendered by the PlantUML server`}
+                       loading="lazy" />
+                  <p class="fences__url">
+                    Detected kind <code>{d.fence.parsed.kind ?? 'unknown'}</code>; the
+                    <code>@startuml</code> wrapper was {d.fence.parsed.wrapped ? 'authored' : 'added for you'}.
+                    The source travels inside that URL — <code>createPlantUml({'{'} server {'}'})</code> points it
+                    at a self-hosted instance.
+                  </p>
+                </>
+              )}
+
+              {/* The three that need a client renderer. LFM hands over the
+                  source or the spec and stops; these mounts are the render
+                  layer doing its half, loaded per-page rather than site-wide. */}
+              {d.handler === 'mermaid' && (
+                <div class="fences__mount mermaid" data-mermaid={d.body}>
+                  <p class="fences__pending">Rendering with mermaid.js…</p>
+                </div>
+              )}
+              {d.handler === 'graphviz' && (
+                <div class="fences__mount" data-dot={d.body}>
+                  <p class="fences__pending">Rendering with @viz-js/viz…</p>
+                </div>
+              )}
+              {d.handler === 'vega-lite' && (
+                <div class="fences__mount" data-vega={JSON.stringify(d.fence.parsed.spec)}>
+                  <p class="fences__pending">Rendering with vega-embed…</p>
+                </div>
+              )}
+
+              {/* json canvas: nodes carry x/y/w/h, so a plain SVG needs no
+                  library at all. Proves the parsed payload is sufficient. */}
+              {d.handler === 'jsoncanvas' && (() => {
+                const ns = d.fence.parsed.nodes;
+                const pad = 20;
+                const maxX = Math.max(...ns.map((n: any) => n.x + n.width)) + pad;
+                const maxY = Math.max(...ns.map((n: any) => n.y + n.height)) + pad;
+                const byId = Object.fromEntries(ns.map((n: any) => [n.id, n]));
+                return (
+                  <svg class="fences__canvas" viewBox={`-${pad} -${pad} ${maxX + pad} ${maxY + pad}`}
+                       role="img" aria-label="JSON Canvas document rendered from the parsed nodes and edges">
+                    {d.fence.parsed.edges.map((e: any) => {
+                      const a = byId[e.fromNode], b = byId[e.toNode];
+                      if (!a || !b) return null;
+                      const x1 = a.x + a.width, y1 = a.y + a.height / 2;
+                      const x2 = b.x, y2 = b.y + b.height / 2;
+                      return (
+                        <>
+                          <line x1={x1} y1={y1} x2={x2} y2={y2} class="edge" />
+                          {e.label && <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 6} class="edge-label">{e.label}</text>}
+                        </>
+                      );
+                    })}
+                    {ns.map((n: any) => (
+                      <>
+                        <rect x={n.x} y={n.y} width={n.width} height={n.height} rx="6" class="node" />
+                        <text x={n.x + n.width / 2} y={n.y + n.height / 2 + 5} class="node-label">{n.text}</text>
+                      </>
+                    ))}
+                  </svg>
+                );
+              })()}
+            </div>
           </PipelineDemo>
         ))}
       </div>
@@ -440,6 +503,107 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  // The render layer, doing its half.
+  //
+  // LFM stops at the AST — mermaid and graphviz get recognition only, and
+  // vega-lite gets a parsed spec. Something still has to draw, and that
+  // something is a client renderer the *site* chooses. Loaded from a CDN, on
+  // this page only, deliberately not a site-wide dependency: the whole point
+  // of the empty registry is that a splash shouldn't pay for a diagram type it
+  // never uses. Same pattern as /formats.
+  //
+  // Every renderer fails soft. A diagram that cannot draw falls back to a note,
+  // because the payload above it already says what it was going to show.
+
+  const load = (src: string) =>
+    new Promise<void>((res, rej) => {
+      const el = document.createElement('script');
+      el.src = src;
+      el.onload = () => res();
+      el.onerror = () => rej(new Error(src));
+      document.head.appendChild(el);
+    });
+
+  const fail = (mount: Element, what: string) => {
+    mount.innerHTML =
+      `<p class="fences__pending">${what} unavailable — the payload above still describes the diagram.</p>`;
+  };
+
+  // ── mermaid ──────────────────────────────────────────────────────────────
+  // Mermaid is not unstyled by default — it inlines a <style> into every SVG,
+  // generated from `themeVariables`. Feeding it the site's design tokens is
+  // what makes a diagram belong here rather than look imported. See
+  // src/lib/mermaid-theme.ts for the full reasoning.
+  //
+  // It also bakes that stylesheet in at render time, so a mode toggle cannot
+  // be handled by CSS — the diagram has to be drawn again.
+  const mermaidMount = document.querySelector<HTMLElement>('[data-mermaid]');
+  if (mermaidMount) {
+    (async () => {
+      try {
+        const [mod, theme] = await Promise.all([
+          import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs') as any,
+          import('../lib/mermaid-theme.ts'),
+        ]);
+        const mermaid = mod.default;
+        const source = mermaidMount.dataset.mermaid!;
+        let n = 0;
+
+        const draw = async () => {
+          try {
+            mermaid.initialize(theme.mermaidConfig());
+            // A fresh id each pass — Mermaid caches per id, so reusing one
+            // returns the previous render with the previous palette.
+            const { svg } = await mermaid.render(`demo-mermaid-${n++}`, source);
+            mermaidMount.innerHTML = svg;
+          } catch {
+            fail(mermaidMount, 'mermaid.js');
+          }
+        };
+
+        await draw();
+        theme.onModeChange(draw);
+      } catch {
+        fail(mermaidMount, 'mermaid.js');
+      }
+    })();
+  }
+
+  // ── graphviz ─────────────────────────────────────────────────────────────
+  const dotMount = document.querySelector<HTMLElement>('[data-dot]');
+  if (dotMount) {
+    (async () => {
+      try {
+        await load('https://cdn.jsdelivr.net/npm/@viz-js/viz@3/lib/viz-standalone.js');
+        const viz = await (window as any).Viz.instance();
+        dotMount.replaceChildren(viz.renderSVGElement(dotMount.dataset.dot!));
+      } catch {
+        fail(dotMount, '@viz-js/viz');
+      }
+    })();
+  }
+
+  // ── vega-lite ────────────────────────────────────────────────────────────
+  const vegaMount = document.querySelector<HTMLElement>('[data-vega]');
+  if (vegaMount) {
+    (async () => {
+      try {
+        await load('https://cdn.jsdelivr.net/npm/vega@5');
+        await load('https://cdn.jsdelivr.net/npm/vega-lite@5');
+        await load('https://cdn.jsdelivr.net/npm/vega-embed@6');
+        vegaMount.replaceChildren();
+        await (window as any).vegaEmbed(vegaMount, JSON.parse(vegaMount.dataset.vega!), {
+          actions: false,
+          renderer: 'svg',
+        });
+      } catch {
+        fail(vegaMount, 'vega-embed');
+      }
+    })();
+  }
+</script>
 
 <style>
   .intro { padding: var(--space-16) 0 var(--space-8); }
@@ -512,6 +676,27 @@ const pageTitle = 'Live demo — every feature, parsed at build time';
     font-size: 0.82rem;
     line-height: 1.5;
     white-space: pre;
+  }
+
+  .fences__out > * + * { margin-top: var(--space-4); }
+
+  .fences__img,
+  .fences__canvas { max-width: 100%; height: auto; display: block; }
+
+  .fences__mount :global(svg) { max-width: 100%; height: auto; }
+
+  .fences__pending { margin: 0; font-size: 0.88rem; color: var(--color-text-dimmer); font-style: italic; }
+
+  .fences__canvas { max-height: 16rem; }
+  .fences__canvas :global(.node) { fill: var(--color-bg-elevated); stroke: var(--color-border-accent); }
+  .fences__canvas :global(.node-label) {
+    fill: var(--color-text); font-size: 14px; text-anchor: middle;
+    font-family: var(--font, system-ui);
+  }
+  .fences__canvas :global(.edge) { stroke: var(--color-text-dim); stroke-width: 1.5; }
+  .fences__canvas :global(.edge-label) {
+    fill: var(--color-text-dim); font-size: 11px; text-anchor: middle;
+    font-family: var(--font, system-ui);
   }
 
   .fences__url { margin: 0; font-size: 0.9rem; color: var(--color-text-soft); }
