@@ -89,6 +89,87 @@ const hb = demos.find((d) => d.entry.id === 'eyebrow-heading-subheading');
 const headingBlockText = hb ? find(hb.tree, (n: any) => n.type === 'heading')[0].data.headingText : '';
 
 /**
+ * Renderings for the three features whose payload alone undersells them.
+ *
+ * Each is built from the parsed payload only — nothing re-reads the source —
+ * which is the point: if the payload were missing something a renderer needs,
+ * these would not be constructible.
+ */
+
+/** Visible text of a node subtree, markup stripped. */
+function plainText(node: any): string {
+  if (!node) return '';
+  if (typeof node.value === 'string') return node.value;
+  if (!Array.isArray(node.children)) return '';
+  return node.children.map(plainText).join('');
+}
+
+/** Callout: type, title and body — exactly what a <Callout> component receives. */
+const calloutDemo = demos.find((d) => d.entry.id === 'callouts');
+const calloutView = (() => {
+  if (!calloutDemo) return null;
+  const node = directive(calloutDemo.tree, 'callout');
+  const ICON: Record<string, string> = {
+    note: 'i', info: 'i', tip: '\u2726', warning: '\u26A0', danger: '\u26A0', success: '\u2713',
+  };
+  return {
+    type: node.attributes.type,
+    title: node.attributes.title,
+    className: node.data.hProperties.class,
+    icon: ICON[node.attributes.type] ?? 'i',
+    body: node.children.map(plainText).filter(Boolean),
+  };
+})();
+
+/**
+ * Citations: the prose with inline superscripts, plus the Sources list.
+ *
+ * The superscripts come from walking the paragraph's `footnoteReference`
+ * children and looking each identifier up in the citation map — which is the
+ * whole reason the plugin attaches a map as well as an ordered array.
+ */
+const citationDemo = demos.find((d) => d.entry.id === 'citations');
+const citationView = (() => {
+  if (!citationDemo) return null;
+  const data = citationDemo.tree.data.citations;
+  const paragraph = citationDemo.tree.children.find((n: any) => n.type === 'paragraph');
+  const segments = (paragraph?.children ?? []).map((child: any) => {
+    if (child.type === 'footnoteReference') {
+      const hit = data.map.get(child.identifier);
+      return { sup: hit ? String(hit.index) : '?', id: child.identifier };
+    }
+    return { text: plainText(child) };
+  });
+  return { segments, sources: data.ordered };
+})();
+
+/**
+ * Carousel: the resolved slide order, as a stepper would show it.
+ *
+ * The fixture's image paths are illustrative and nothing is hosted, so each
+ * frame draws a placeholder rather than a broken <img>. That is the more
+ * honest demo anyway — what the plugin produces is the ordering and the
+ * metadata, not the pixels.
+ */
+const carouselDemo = demos.find((d) => d.entry.id === 'image-carousel');
+const carouselView = (() => {
+  if (!carouselDemo) return null;
+  const { carousel } = directive(carouselDemo.tree, 'image-carousel').data;
+  return {
+    variant: carousel.variant,
+    sort: carousel.sort,
+    title: carousel.title,
+    numbered: carousel.numbered,
+    slides: carousel.slides.map((sl: any, i: number) => ({
+      ...sl,
+      ordinal: i + 1,
+      file: String(sl.src).split('/').pop(),
+      stamp: sl.capturedAt ? sl.capturedAt.toISOString().replace('.000Z', 'Z') : 'no stamp in filename',
+    })),
+  };
+})();
+
+/**
  * JSON Canvas layout, precomputed.
  *
  * The SVG below is drawn from this — proof that the parsed payload carries
@@ -233,6 +314,68 @@ const fenceDemos = demos.filter((d) => d.entry.data.kind === 'fence');
                 <p class="heading-block-subheading subheading">{sub}</p>
               ))}
             </hgroup>
+          )}
+
+          {d.entry.id === 'callouts' && calloutView && (
+            <div slot="rendered" class={calloutView.className}>
+              <p class="callout__head">
+                <span class="callout__icon" aria-hidden="true">{calloutView.icon}</span>
+                <span class="callout__title">{calloutView.title}</span>
+              </p>
+              {calloutView.body.map((para) => <p class="callout__body">{para}</p>)}
+            </div>
+          )}
+
+          {d.entry.id === 'citations' && citationView && (
+            <div slot="rendered">
+              <p class="cite__prose">
+                {citationView.segments.map((seg) =>
+                  seg.sup
+                    ? <sup class="cite__ref"><a href={`#src-${seg.sup}`} title={seg.id}>{seg.sup}</a></sup>
+                    : <span>{seg.text}</span>
+                )}
+              </p>
+              <p class="cite__label">Sources</p>
+              <ol class="cite__list">
+                {citationView.sources.map((c) => (
+                  <li id={`src-${c.index}`}>
+                    {c.url
+                      ? <a href={c.url} target="_blank" rel="noopener">{c.title ?? c.url}</a>
+                      : <span>{c.title ?? c.raw}</span>}
+                    {c.source && <span class="cite__meta"> — {c.source}</span>}
+                    {c.publishedDate && <span class="cite__meta"> · {c.publishedDate}</span>}
+                    <code class="cite__hex">[^{c.identifier}]</code>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {d.entry.id === 'image-carousel' && carouselView && (
+            <div slot="rendered">
+              <p class="car__head">
+                <strong>{carouselView.title}</strong>
+                <span class="cite__meta"> — {carouselView.variant}, ordered {carouselView.sort}</span>
+              </p>
+              <ol class="car__strip">
+                {carouselView.slides.map((sl) => (
+                  <li class="car__slide">
+                    <div class="car__frame" role="img" aria-label={sl.alt}>
+                      {carouselView.numbered && <span class="car__ord">{sl.ordinal}</span>}
+                      <span class="car__ph">image not hosted for this demo</span>
+                    </div>
+                    <p class="car__label">{sl.label ?? sl.alt}</p>
+                    {sl.caption && <p class="car__caption">{sl.caption}</p>}
+                    <p class="car__stamp"><code>{sl.file}</code><br />{sl.stamp}</p>
+                  </li>
+                ))}
+              </ol>
+              <p class="cite__meta">
+                Ordering resolved from the filename stamp. Both frames share one stamp —
+                it marks a prep run, not a capture — so the stable sort falls back to
+                authored position, which is why they are still in the order written.
+              </p>
+            </div>
           )}
 
           {d.entry.id === 'table-of-contents' && (
@@ -507,6 +650,58 @@ const fenceDemos = demos.filter((d) => d.entry.data.kind === 'fence');
     color: var(--color-text-dim);
     font-size: 0.98rem;
   }
+
+  /* Renderings built from the parsed payload. A consuming site would use its
+     own components; these exist so the page shows the shape, not just the JSON. */
+  .callout {
+    border: 1px solid var(--color-border-accent);
+    border-left-width: 4px;
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background: var(--color-bg-elevated);
+  }
+  .callout__head { margin: 0 0 var(--space-2); display: flex; gap: var(--space-2); align-items: baseline; }
+  .callout__icon { color: var(--color-accent); font-weight: 700; }
+  .callout__title { font-weight: 650; }
+  .callout__body { margin: 0; color: var(--color-text-soft); }
+
+  .cite__prose { margin: 0 0 var(--space-4); }
+  .cite__ref { font-size: 0.7em; }
+  .cite__ref a { text-decoration: none; padding: 0 0.1em; }
+  .cite__label {
+    margin: 0 0 var(--space-2); font-size: 0.72rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--color-text-dimmer);
+  }
+  /* The superscript points at a number, so the number has to be visible —
+     the page reset zeroes list markers outside .prose. */
+  .cite__list { margin: 0; padding-left: var(--space-6); list-style: decimal; }
+  .cite__list::marker, .cite__list li::marker { color: var(--color-text-dim); }
+  .cite__list li { margin-bottom: var(--space-2); }
+  .cite__meta { color: var(--color-text-dim); font-size: 0.9em; }
+  .cite__hex { margin-left: var(--space-2); font-size: 0.78em; color: var(--color-text-dimmer); }
+
+  .car__head { margin: 0 0 var(--space-3); }
+  .car__strip {
+    display: flex; gap: var(--space-4); margin: 0 0 var(--space-3); padding: 0;
+    list-style: none; overflow-x: auto;
+  }
+  .car__slide { flex: 0 0 15rem; min-width: 0; }
+  .car__frame {
+    position: relative; aspect-ratio: 16 / 10;
+    border: 1px dashed var(--color-border-accent); border-radius: var(--radius-md);
+    background: var(--color-bg-code);
+    display: grid; place-items: center;
+  }
+  .car__ord {
+    position: absolute; top: 0.5rem; left: 0.5rem;
+    background: var(--color-accent); color: var(--color-bg);
+    border-radius: var(--radius-pill); min-width: 1.5rem; height: 1.5rem;
+    display: grid; place-items: center; font-size: 0.8rem; font-weight: 700;
+  }
+  .car__ph { font-size: 0.75rem; color: var(--color-text-dimmer); font-style: italic; padding: 0 1rem; text-align: center; }
+  .car__label { margin: var(--space-2) 0 0; font-weight: 600; font-size: 0.92rem; }
+  .car__caption { margin: 0; font-size: 0.88rem; color: var(--color-text-soft); }
+  .car__stamp { margin: var(--space-1) 0 0; font-size: 0.72rem; color: var(--color-text-dimmer); }
 
   .toc__caption {
     margin: 0 0 var(--space-3);
