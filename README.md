@@ -138,6 +138,8 @@ import { remarkLfmCallouts } from '@lossless-group/lfm';
 
 Three prefixes, one rule. `remark-*` is the ecosystem's — `remark-gfm` and `remark-directive` are dependencies, not ours. `remark-lfm-*` means the remark ecosystem has a formal plugin for this capability and we do it our own way. `lfm-*` means we invented it — our syntax trigger, our handling, no upstream equivalent. Full rule: `context-v/blueprints/Naming-Plugins-Against-the-Remark-Ecosystem.md`.
 
+Everything renamed in 0.5.0 kept its old export name as a **permanent alias** — `remarkCallouts`, `remarkHeadingIds`, `remarkOgFetcher` and the rest all still resolve, and a test asserts they do. Nothing needs changing on upgrade; the names above are simply what to write in new code.
+
 The `remarkLfm` preset enables **gfm, directives, callouts, citations, heading-ids and heading-blocks** by default. Three are opt-in because each needs something from you: `remark-lfm-code-fences` needs formats registered, `remark-lfm-wikilinks` needs a resolver, and `lfm-og-fetcher` needs `enabled: true` because it makes network calls.
 
 The plugins above are the **triggers** in [the STC paradigm](#the-stc-paradigm) — each one matches its own family of authoring syntaxes and normalizes them into one canonical MDAST shape. Adding a syntax is adding a normalizer plugin; consumers don't change.
@@ -152,15 +154,103 @@ const tree = await parseMarkdown(content, {
   directives: true,  // Directive syntax (default: true)
   callouts: true,    // Obsidian callout normalization (default: true)
   citations: true,   // Hex-code footnote renumbering (default: true)
-  headingIds: true,  // Heading anchor ids + outline (default: true)
+  headingIds: true,     // Heading anchor ids + outline (default: true)
+  headingBlocks: true,  // $$ eyebrow / && subheading binding (default: true)
   // codeFences: { formats: [yang, plantuml] }  // see Code-fence formats — opt-in
   // wikilinks: { resolver: ... }               // see Wikilinks — opt-in
 });
 ```
 
+## Heading blocks (eyebrow, heading, subheading)
+
+Every card component you have ever built renders a three-part heading: a small label above, the headline, and a line of supporting text below. Markdown gives you one of the three.
+
+```markdown
+$$ Portfolio Operations
+## Every email from a portco, filed as PDFs
+&& Two passes, inventory before export — so you can verify coverage
+```
+
+```html
+<hgroup class="heading-block">
+  <p class="heading-block-eyebrow eyebrow">Portfolio Operations</p>
+  <h2 id="every-email-from-a-portco-filed-as-pdfs">Every email from a portco, filed as PDFs</h2>
+  <p class="heading-block-subheading subheading">Two passes, inventory before export</p>
+</hgroup>
+```
+
+**Position is the entire rule.** The markers mean nothing on their own — `$$` is an eyebrow only when the very next line is a heading, `&&` a subheading only when the previous line was one. Everywhere else they are ordinary text. Everything else follows: no blank line between them, order fixed, the heading mandatory, either optional line omittable, any heading level.
+
+That is also why it is safe on by default. A parser meeting a `$$` asks one question, and on almost every existing document the answer is no.
+
+| Marker | Becomes | Rendered as | Required |
+|---|---|---|---|
+| `$$ ` (or `^^ `) | `eyebrow` | `<p class="heading-block-eyebrow eyebrow">` | No |
+| `## ` | the heading | `<h2>` — any level | **Yes** |
+| `&& ` | `subheadings[]` | `<p class="heading-block-subheading subheading">` | No |
+
+**The class names are public API.** LFM ships no CSS, so they are the only thing you can style against. Each part carries two: the `heading-block-*` one is scoped to the block, which is what lets `.heading-block .eyebrow` outrank your own `.prose p`; the bare `eyebrow` / `subheading` is deliberate reuse of whatever your card components already style.
+
+The eyebrow and subheading are `<p>`, never headings — the accessibility guidance for `hgroup`, and what keeps them out of your table of contents as sections that do not exist.
+
+**On `$$` and LaTeX.** It is the display-math delimiter everywhere, and the positional rule defuses most of the overlap: a math block's next line is a formula, never an `##`. `^^` is an accepted alias from day one, so if math ever lands, `$$` can be deprecated for eyebrows without a content migration.
+
+Degradation matters here, because this syntax lands in files read outside your renderer. In Obsidian, on GitHub, in any plain preview, `$$ Portfolio Operations` renders as literal text above the heading. Ugly, not broken, still readable.
+
+## Table of contents (the heading outline)
+
+`remarkLfmHeadingIds` gives every heading a stable, deduped anchor and attaches an ordered outline at `tree.data.headings`:
+
+```ts
+export interface LfmHeading {
+  id: string;              // final anchor id, after dedupe
+  text: string;            // plain text, markup stripped
+  depth: 1 | 2 | 3 | 4 | 5 | 6;
+  duplicateOf?: string;    // this slug collided with an earlier heading
+  synthetic?: boolean;     // text slugified to nothing; a positional id was used
+  inContainer?: string;    // innermost enclosing callout / details / blockquote / listItem
+  eyebrow?: string;        // when the heading is part of an eyebrow block
+}
+```
+
+**`inContainer` is the one that makes a ToC possible.** A heading inside a `> [!warning]` callout is not a document section, but it still deserves an anchor — a share link into a callout is a link like any other. The outline records where it sits so you can leave it out of the ToC without taking its anchor away. It carries the container's *name* rather than a boolean, because a `details` heading is a navigable section while a callout one is an aside, and you may reasonably want to treat them differently.
+
+Two pure folds ship alongside, for the same reason `slugifyHeading` does — every consumer writes them, and the edge cases (a document opening at `h3`, an `h2` → `h4` jump, a trailing `h6`) would each be got wrong independently:
+
+```ts
+import { nestHeadings, filterHeadings } from '@lossless-group/lfm';
+
+const outline = (tree as any).data?.headings ?? [];
+
+const toc = nestHeadings(
+  filterHeadings(outline, 2, 3)            // depth band; drops `synthetic` entries
+    .filter((h) => !h.inContainer),        // your call — asides out, sections in
+);
+// LfmHeadingNode[] — LfmHeading plus `children`, so anything you decorated survives
+```
+
+Depth gaps are **not** filled with placeholders: an `h4` under an `h2` becomes a direct child, because inventing an empty `h3` would put a waypoint in the ToC with no anchor to point at.
+
+Components, layout, breakpoints, scroll tracking and measuring your pinned header stay out of the package, permanently. The seam: **LFM decides what a heading is called and where it sits; your render layer decides what the reader sees.**
+
+## Image carousels
+
+```markdown
+:::image-carousel{variant="stepper" title="Setting up Aside"}
+::image{src="/Welcome_20260817T164659Z.jpg" alt="Welcome screen" label="Welcome" caption="…"}
+::image{src="/Recovery_20260817T171052Z.jpg" alt="Recovery key" label="Recovery key"}
+:::
+```
+
+Slides are extracted (from `::image{}` directives or plain `![alt](src)`), the `img-carousel` alias collapses to one name, and order resolves — all into a single `data.carousel` payload, so every framework reads one contract instead of re-walking children.
+
+Four variants: `filmstrip`, `stepper`, `peek`, `contact-sheet`. The first three are *sequences* and default to `sort="chronological"`, reading the ISO 8601 basic-format stamp the house image-prep convention appends to each filename. `contact-sheet` is excluded deliberately — it renders every frame at once, so there is no reading order to reorder.
+
+> **The stamp marks a prep run, not a capture.** Every image from one invocation carries an identical stamp, so chronological ordering only ever reorders *across* batches. The sort is stable and falls back to `authoredIndex`, which makes the ordinary case correct — but an image belonging mid-sequence that was uploaded later will move to the end. `sort="authored"` opts out. There is a worked example of exactly this on the [demo page](https://lossless-group.github.io/lossless-flavored-markdown-package/demo/).
+
 ## Wikilinks (Obsidian-style internal/external resolution)
 
-Obsidian wikilinks (`[[Page]]`, `[[Page|Display]]`, `[[folder/Page#Section|Display]]`) are first-class authoring vocabulary in vaults — and dead text in standard Markdown. `remarkLosslessWikilinks` resolves them into proper `link` MDAST nodes against a **site-supplied resolver function**. The plugin owns the syntax (regex, MDAST splice, link node shape); each site owns its destinations (which prefix routes where, what's local vs external, what's intentionally parked).
+Obsidian wikilinks (`[[Page]]`, `[[Page|Display]]`, `[[folder/Page#Section|Display]]`) are first-class authoring vocabulary in vaults — and dead text in standard Markdown. `remarkLfmWikilinks` resolves them into proper `link` MDAST nodes against a **site-supplied resolver function**. The plugin owns the syntax (regex, MDAST splice, link node shape); each site owns its destinations (which prefix routes where, what's local vs external, what's intentionally parked).
 
 This split exists because wikilink destinations are inherently per-site. The same `[[Vocabulary/Polyrepo]]` resolves to `lossless.group/more-about/polyrepo` from one site and `glossary.example.com/polyrepo` from another. Baking a default resolver into the package would be wrong for every consumer except the one we picked.
 
@@ -307,13 +397,13 @@ A fenced code block is a natural place to author a diagram, and every project en
 ```ts
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
-import { remarkCodeFences } from '@lossless-group/lfm';
+import { remarkLfmCodeFences } from '@lossless-group/lfm';
 import { yang } from '@lossless-group/lfm/formats/yang';
 import { mermaid, jsonSchema } from '@lossless-group/lfm/formats';
 
 const processor = unified()
   .use(remarkParse)
-  .use(remarkCodeFences, { formats: [yang, jsonSchema, mermaid] });
+  .use(remarkLfmCodeFences, { formats: [yang, jsonSchema, mermaid] });
 ```
 
 Or through the preset:
@@ -406,17 +496,17 @@ Throwing from `parse` is safe — the message lands on `data.fence.error` and th
 
 ## OG fetching (build-time)
 
-`remarkOgFetcher` walks the tree, finds external links and link-preview directives, fetches their OpenGraph metadata via a configurable backend, and annotates the AST with `LinkPreviewData`. Runs at parse time so renderers have everything they need with no client-side round-trip — popovers and previews appear instantly on hover.
+`lfmOgFetcher` walks the tree, finds external links and link-preview directives, fetches their OpenGraph metadata via a configurable backend, and annotates the AST with `LinkPreviewData`. Runs at parse time so renderers have everything they need with no client-side round-trip — popovers and previews appear instantly on hover.
 
 ```ts
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
-import { remarkLfm, remarkOgFetcher } from '@lossless-group/lfm';
+import { remarkLfm, lfmOgFetcher } from '@lossless-group/lfm';
 
 const processor = unified()
   .use(remarkParse)
   .use(remarkLfm)
-  .use(remarkOgFetcher, {
+  .use(lfmOgFetcher, {
     enabled: true,
     backend: 'direct',         // or 'opengraph-io' (with apiKey)
     timeout: 5000,             // ms — don't bump above 10s, one unreachable URL stalls the build
@@ -486,15 +576,40 @@ import type {
   LfmComponentNode,    // Normalized node from any trigger syntax
   LfmCalloutNode,      // Callout directive node
   Citation,            // Single citation: index, hex, title, url, source, dates, raw
-  CitationsData,       // tree.data.citations shape: { ordered, byHex, warnings }
+  CitationsData,       // tree.data.citations shape: { map, ordered, warnings }
+  LfmHeading,          // One entry in the tree.data.headings outline
+  LfmHeadingNode,      // Nested form, from nestHeadings() — LfmHeading + children
+  HeadingBlockData,    // data.headingBlock: { eyebrow?, subheadings[] }
+  CarouselData,        // data.carousel: variant, sort, title, numbered, slides
+  CarouselSlide,       // One slide, with capturedAt and preserved authoredIndex
+  FenceFormat,         // A code-fence handler: name, match[], optional parse()
+  FenceData,           // data.fence: { format, parsed?, error? }
   RemarkLfmOptions,    // Preset options
   LinkPreviewData,     // Annotated link metadata (canonical Sources-aligned)
   LinkPreviewSpec,     // What remark-link-preview stamps on directive nodes
-  OGFetchOptions,      // remarkOgFetcher options (backend, ttl, timeout, etc.)
+  OGFetchOptions,      // lfmOgFetcher options (backend, ttl, timeout, etc.)
   OGFetchResult,       // What an OG backend returns
   OGBackendName,       // 'direct' | 'opengraph-io' | …
 } from '@lossless-group/lfm';
 ```
+
+## Tests
+
+```bash
+pnpm test        # builds, then runs the suite
+pnpm test:only   # skip the build when dist/ is current
+```
+
+182 assertions, **zero test dependencies** — `node:test` and `node:assert` are already in the runtime. They run against `dist/`, not `src/`, so each run exercises the barrel exports, the tsup entry map and the built output rather than only the TypeScript.
+
+A few of the files guard things that would otherwise fail silently somewhere else:
+
+| File | Guards |
+|---|---|
+| `naming-contract` | Every deprecated export alias still resolves. Drop one and it breaks in a consuming repo weeks later, not here. |
+| `export-parity` | `package.json` and `deno.json` declare the same subpaths. They drifted once, and the entire fence registry was unimportable from JSR for two releases. |
+| `heading-ids` | The slugifier's *quirks* — extension stripping, `--` collapse, underscore survival. Published anchors depend on them. |
+| `demo-fixtures` | The splash's demo examples still demonstrate what they claim, parsed from the real markdown files on disk. |
 
 ## Roadmap
 
@@ -524,6 +639,7 @@ See [`changelog/`](./changelog/) for entry-by-entry notes following the [Lossles
 ## See also
 
 - **Live splash** — [`lossless-group.github.io/lossless-flavored-markdown-package`](https://lossless-group.github.io/lossless-flavored-markdown-package/) · the package's own GitHub Pages presence: STC diagram, feature gallery, changelog, context-v notes, full-text search
+- **Live demo** — [`/demo`](https://lossless-group.github.io/lossless-flavored-markdown-package/demo/) · every feature as a real markdown file beside the payload `parseMarkdown` actually returned, computed at build time. The same files are the fixtures the test suite runs against
 - **Design system** — [`splash/DESIGN.md`](./splash/DESIGN.md) · token inventory + Ideogram creative brief for OG image generation, formatted to the [Google `@google/design.md`](https://github.com/google-labs-code/design.md) spec
 - **Spec** — [Codifying a Comprehensive Extended Markdown Flavor and Shared Package](https://github.com/lossless-group/astro-knots/blob/master/context-v/specs/Codifying-a-Comprehensive-Extended-Markdown-Flavor-and-Shared-Package.md) · the full specification this package implements
 - **Sister scaffold** — `@lossless-group/lfm-astro` (forthcoming) · components and integration glue for Astro consumers
