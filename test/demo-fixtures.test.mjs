@@ -141,13 +141,47 @@ test('the citations fixture demonstrates order-of-appearance numbering', async (
   assert.ok(ordered.some((c) => c.publishedDate), 'one should carry structured metadata');
 });
 
-test('the carousel fixture produces ordered slides', async () => {
+test('the carousel fixture is a real carousel with real alt text', async () => {
   const tree = await parse(byId['image-carousel']);
   const { carousel } = directive(tree, 'image-carousel').data;
-  assert.equal(carousel.variant, 'stepper');
-  assert.equal(carousel.sort, 'chronological', 'stepper is a sequence variant');
-  assert.equal(carousel.slides.length, 2);
-  assert.ok(carousel.slides.every((s) => s.alt), 'every slide needs alt text');
+  assert.equal(carousel.variant, 'peek');
+  assert.equal(carousel.slides.length, 4, 'two slides does not show a sequence');
+  assert.ok(carousel.title, 'the demo renders the title');
+
+  for (const s of carousel.slides) {
+    assert.ok(s.alt && s.alt.length > 40,
+      `slide "${s.label}" has thin alt text; the fixture is lifted from published work and should keep it`);
+    assert.ok(s.label, 'every slide needs a label');
+    assert.ok(s.src.startsWith('https://'), 'the demo renders these as real images');
+  }
+});
+
+test('the carousel fixture reproduces the run-stamp ordering problem', async () => {
+  // This is the whole reason the fixture is worth having: one image was
+  // re-uploaded after redaction, so it carries a later stamp and chronological
+  // ordering displaces it. Flatten the stamps and the demo stops teaching.
+  const tree = await parse(byId['image-carousel']);
+  const { carousel } = directive(tree, 'image-carousel').data;
+  const slides = carousel.slides;
+
+  assert.equal(carousel.sort, 'chronological', 'peek is a sequence variant');
+
+  const stamps = new Set(slides.map((s) => s.capturedAt?.getTime()));
+  assert.equal(stamps.size, 2, 'the fixture needs one odd stamp out to demonstrate anything');
+
+  const displaced = slides.some((s, i) => s.authoredIndex !== i);
+  assert.ok(displaced, 'no slide moved — the ordering demo shows nothing');
+
+  // Everything sharing the majority stamp must stay in authored order, which
+  // is what makes the sort stable rather than merely correct.
+  const earliest = Math.min(...stamps);
+  const majority = slides.filter((s) => s.capturedAt?.getTime() === earliest);
+  const authoredSeq = majority.map((s) => s.authoredIndex);
+  assert.deepEqual(authoredSeq, [...authoredSeq].sort((a, b) => a - b),
+    'slides sharing a stamp were reordered; the sort is not stable');
+
+  // authoredIndex must survive, or the page cannot show before-and-after.
+  assert.deepEqual([...slides].map((s) => s.authoredIndex).sort((a, b) => a - b), [0, 1, 2, 3]);
 });
 
 test('the link-rollup fixture collects and classifies its urls', async () => {

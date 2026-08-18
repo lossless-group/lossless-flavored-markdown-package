@@ -155,17 +155,32 @@ const carouselDemo = demos.find((d) => d.entry.id === 'image-carousel');
 const carouselView = (() => {
   if (!carouselDemo) return null;
   const { carousel } = directive(carouselDemo.tree, 'image-carousel').data;
+
+  const decorate = (sl: any) => ({
+    ...sl,
+    file: String(sl.src).split('/').pop(),
+    // ImageKit transform — a renderer's decision, not the payload's. Keeps the
+    // page light without touching what the plugin returned.
+    thumb: `${sl.src}?tr=w-560`,
+    stamp: sl.capturedAt ? sl.capturedAt.toISOString().replace('.000Z', 'Z') : 'no stamp',
+  });
+
+  const resolved = carousel.slides.map(decorate);
+  // `authoredIndex` is preserved through the sort, which is the only reason
+  // the before/after below is constructible at all.
+  const authored = [...resolved].sort((a, b) => a.authoredIndex - b.authoredIndex);
+  const moved = resolved.some((sl: any, i: number) => sl.authoredIndex !== i);
+
   return {
     variant: carousel.variant,
     sort: carousel.sort,
     title: carousel.title,
     numbered: carousel.numbered,
-    slides: carousel.slides.map((sl: any, i: number) => ({
-      ...sl,
-      ordinal: i + 1,
-      file: String(sl.src).split('/').pop(),
-      stamp: sl.capturedAt ? sl.capturedAt.toISOString().replace('.000Z', 'Z') : 'no stamp in filename',
-    })),
+    count: resolved.length,
+    resolved,
+    authoredOrder: authored.map((sl: any) => sl.label),
+    resolvedOrder: resolved.map((sl: any) => sl.label),
+    moved,
   };
 })();
 
@@ -355,26 +370,40 @@ const fenceDemos = demos.filter((d) => d.entry.data.kind === 'fence');
             <div slot="rendered">
               <p class="car__head">
                 <strong>{carouselView.title}</strong>
-                <span class="cite__meta"> — {carouselView.variant}, ordered {carouselView.sort}</span>
+                <span class="cite__meta">
+                  {' '}— {carouselView.variant}, {carouselView.count} images, ordered {carouselView.sort}
+                </span>
               </p>
+
               <ol class="car__strip">
-                {carouselView.slides.map((sl) => (
+                {carouselView.resolved.map((sl, i) => (
                   <li class="car__slide">
-                    <div class="car__frame" role="img" aria-label={sl.alt}>
-                      {carouselView.numbered && <span class="car__ord">{sl.ordinal}</span>}
-                      <span class="car__ph">image not hosted for this demo</span>
+                    <div class="car__frame">
+                      {carouselView.numbered && <span class="car__ord">{i + 1}</span>}
+                      <img src={sl.thumb} alt={sl.alt} loading="lazy" decoding="async" />
                     </div>
-                    <p class="car__label">{sl.label ?? sl.alt}</p>
+                    <p class="car__label">{sl.label}</p>
                     {sl.caption && <p class="car__caption">{sl.caption}</p>}
-                    <p class="car__stamp"><code>{sl.file}</code><br />{sl.stamp}</p>
+                    <p class="car__stamp">{sl.stamp}</p>
                   </li>
                 ))}
               </ol>
-              <p class="cite__meta">
-                Ordering resolved from the filename stamp. Both frames share one stamp —
-                it marks a prep run, not a capture — so the stable sort falls back to
-                authored position, which is why they are still in the order written.
-              </p>
+
+              {carouselView.moved && (
+                <div class="car__order">
+                  <p class="cite__label">Ordering, resolved</p>
+                  <p class="car__row"><span class="car__key">authored</span> {carouselView.authoredOrder.join('  \u203A  ')}</p>
+                  <p class="car__row"><span class="car__key">rendered</span> {carouselView.resolvedOrder.join('  \u203A  ')}</p>
+                  <p class="cite__meta">
+                    One image was re-uploaded after redaction, so its filename carries a later
+                    stamp and chronological ordering moves it to the end. The stamp marks a
+                    prep run, not a capture — which is why the sort is stable and everything
+                    sharing a stamp stays in authored order. <code>sort="authored"</code> opts out.
+                    Only <code>authoredIndex</code> surviving the sort makes this comparison
+                    possible at all.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -685,13 +714,13 @@ const fenceDemos = demos.filter((d) => d.entry.data.kind === 'fence');
     display: flex; gap: var(--space-4); margin: 0 0 var(--space-3); padding: 0;
     list-style: none; overflow-x: auto;
   }
-  .car__slide { flex: 0 0 15rem; min-width: 0; }
+  .car__slide { flex: 0 0 17rem; min-width: 0; }
   .car__frame {
-    position: relative; aspect-ratio: 16 / 10;
-    border: 1px dashed var(--color-border-accent); border-radius: var(--radius-md);
-    background: var(--color-bg-code);
-    display: grid; place-items: center;
+    position: relative;
+    border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    background: var(--color-bg-code); overflow: hidden;
   }
+  .car__frame img { display: block; width: 100%; height: auto; }
   .car__ord {
     position: absolute; top: 0.5rem; left: 0.5rem;
     background: var(--color-accent); color: var(--color-bg);
@@ -701,7 +730,15 @@ const fenceDemos = demos.filter((d) => d.entry.data.kind === 'fence');
   .car__ph { font-size: 0.75rem; color: var(--color-text-dimmer); font-style: italic; padding: 0 1rem; text-align: center; }
   .car__label { margin: var(--space-2) 0 0; font-weight: 600; font-size: 0.92rem; }
   .car__caption { margin: 0; font-size: 0.88rem; color: var(--color-text-soft); }
-  .car__stamp { margin: var(--space-1) 0 0; font-size: 0.72rem; color: var(--color-text-dimmer); }
+  .car__stamp { margin: var(--space-1) 0 0; font-size: 0.72rem; color: var(--color-text-dimmer); font-family: monospace; }
+
+  .car__order { margin-top: var(--space-4); }
+  .car__row { margin: 0 0 var(--space-1); font-size: 0.9rem; }
+  .car__key {
+    display: inline-block; min-width: 5.5rem;
+    font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--color-text-dimmer);
+  }
 
   .toc__caption {
     margin: 0 0 var(--space-3);
