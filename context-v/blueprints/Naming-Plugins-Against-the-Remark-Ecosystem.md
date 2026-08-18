@@ -2,7 +2,7 @@
 site_uuid: 72b35418-b72f-4637-b4ff-e93dcfca499d
 hex_code: kkxtmo
 title: "Naming Plugins Against the Remark Ecosystem"
-lede: "Three tiers, one question each. Does a formal remark plugin already handle this? Are we bending one to our own flavor? Or did we invent the syntax outright? The answer picks the prefix, and the prefix tells a stranger on JSR how much of remark they already understand."
+lede: "Three questions pick the prefix — `remark-`, `remark-lfm-`, or `lfm-` — and the prefix tells a stranger on JSR how much of remark they know."
 publish: true
 date_created: 2026-08-17
 date_modified: 2026-08-17

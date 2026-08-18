@@ -24,6 +24,7 @@ image_prompt: A team of tiny robots is on a desk, taking a set of web UI compone
 banner_image: https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Figma-Object-Embeds-using-Embed-Kit_banner_image_1755815941823_YvitG--88.webp
 portrait_image: https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Figma-Object-Embeds-using-Embed-Kit_portrait_image_1755815950469_UsSm3cibW.webp
 square_image: https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Figma-Object-Embeds-using-Embed-Kit_square_image_1755815958668_1lRXdMK02.webp
+hex_code: w30d3g
 ---
 
 

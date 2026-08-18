@@ -5,7 +5,7 @@ site_uuid: 3c164f80-5564-4c6a-b011-c373f8e7f90b
 hex_code: xc50lc
 publish: true
 title: "Heading Outline Cannot Distinguish Container Headings from Document Headings"
-lede: "`tree.data.headings` collects the `###` inside a `> [!info]` callout exactly as if it were a document-level section. That is right for anchors and wrong for a table of contents — and the outline carries nothing that lets a consumer tell the two apart."
+lede: "`tree.data.headings` collects a `###` inside a `> [!info]` callout as a document section — right for anchors, wrong for a table of contents."
 slug: heading-outline-cannot-distinguish-container-headings
 at_semantic_version: 0.0.1.0
 status: Resolved
@@ -22,6 +22,8 @@ tags:
   - Consumer-Contract
   - Blocker
 image_prompt: "A nested set of glass display cases; inside the innermost one sits a numbered brass tag identical to the ones mounted on the outer cases, indistinguishable at a glance."
+date_authored_initial_draft: 2026-08-17
+date_authored_current_draft: 2026-08-17
 ---
 
 # Heading Outline Cannot Distinguish Container Headings from Document Headings

@@ -5,7 +5,7 @@ site_uuid: 3e3afb82-d640-4c13-8c80-06447b8f2ab6
 hex_code: md6yd4
 publish: true
 title: "Maintain Table of Contents from the Heading Outline"
-lede: "`remarkHeadingIds` already attaches an outline described in its own source as ready to render a table of contents. Nobody renders it, and the reason is a gap in the contract: the outline is flat, and it can't tell you which headings are buried inside a callout."
+lede: "`remarkHeadingIds` already attaches a ToC-ready outline. Nobody renders it: the outline is flat and can't flag headings buried in a callout."
 slug: maintain-table-of-contents-from-the-heading-outline
 at_semantic_version: 0.0.0.1
 authors:
@@ -19,6 +19,8 @@ tags:
   - Heading-Anchors
   - Consumer-Contract
 image_prompt: "A brass card catalogue whose drawers float free of the cabinet and arrange themselves into a nested tree in mid-air; one drawer is shaded, half-hidden inside a glass case."
+date_authored_initial_draft: 2026-08-17
+date_authored_current_draft: 2026-08-17
 ---
 
 # Maintain Table of Contents from the Heading Outline

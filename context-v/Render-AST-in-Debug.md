@@ -21,6 +21,7 @@ image_prompt: "A robot orchestra conductor in a suit is commanding a swarm of di
 banner_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/2025-sept/Render-AST-in-Debug_banner_image_1762886868851_rxAw_SLVd.webp"
 portrait_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/2025-sept/Render-AST-in-Debug_portrait_image_1762886869756_Q5Rh0XBLb.webp"
 square_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/2025-sept/Render-AST-in-Debug_square_image_1762886870895_m1__iH0II.webp"
+hex_code: q39jg8
 ---
 
 

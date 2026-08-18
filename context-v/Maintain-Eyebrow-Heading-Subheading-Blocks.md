@@ -21,6 +21,8 @@ tags:
   - Skimmability
   - Table-Of-Contents
 image_prompt: "Three stacked brass nameplates of decreasing size mounted on a single wooden backing board, the middle one largest and polished brightest."
+date_authored_initial_draft: 2026-08-17
+date_authored_current_draft: 2026-08-17
 ---
 
 # Maintain Eyebrow, Heading and Subheading Blocks

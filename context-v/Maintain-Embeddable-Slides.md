@@ -18,6 +18,7 @@ image_prompt: "A small robot stands with a small projector on top of a computer 
 banner_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Embeddable-Slides_banner_image_1755815513881_vG9H27ZKx.webp"
 portrait_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Embeddable-Slides_portrait_image_1755815520946_NlMeL6qdl.webp"
 square_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Embeddable-Slides_square_image_1755815527652_HEYKVBKOm.webp"
+hex_code: 4jiad9
 ---
 
 

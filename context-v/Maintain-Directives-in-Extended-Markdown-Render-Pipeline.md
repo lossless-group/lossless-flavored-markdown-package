@@ -20,6 +20,9 @@ image_prompt: "A robot representing AI is in an intersection directing traffic a
 banner_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Directives-in-Extended-Markdown-Render-Pipeline_banner_image_1755814211355_AEvMbqrBg.webp"
 portrait_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Directives-in-Extended-Markdown-Render-Pipeline_portrait_image_1755814218739_6ysZM_lpX.webp"
 square_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Directives-in-Extended-Markdown-Render-Pipeline_square_image_1755814233744_VhZPczidH.webp"
+hex_code: 7jzs1x
+date_authored_initial_draft: 2025-07-29
+date_authored_current_draft: 2025-07-29
 ---
 # Maintain Directives as part of our Extended Markdown
 
