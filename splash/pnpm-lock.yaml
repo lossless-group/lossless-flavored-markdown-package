@@ -20,6 +20,12 @@ importers:
       pagefind:
         specifier: ^1.5.2
         version: 1.5.2
+      remark-parse:
+        specifier: ^11.0.0
+        version: 11.0.0
+      unified:
+        specifier: ^11.0.0
+        version: 11.0.5
 
 packages:
 
