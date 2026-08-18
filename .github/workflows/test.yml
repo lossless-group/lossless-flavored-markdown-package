@@ -1,0 +1,101 @@
+# Continuous integration for the package at the repo root (@lossless-group/lfm).
+#
+# Distinct from pages.yml, which builds and deploys `splash/` — a separate
+# private project with its own lockfile. They are complementary rather than
+# redundant:
+#
+#   pages.yml   does the site still build? Because /demo parses all thirteen
+#               demo fixtures at build time, it already catches a plugin that
+#               *throws*.
+#   this        does the package still behave? It catches the silent failures —
+#               a wrong payload, a dropped export alias, the two export maps
+#               drifting apart again.
+#
+# The suite reads `splash/src/content/lfm-demos/*.md` as plain markdown off
+# disk, so this job needs nothing from splash/ beyond the checkout.
+
+name: Test the package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same ref makes an in-flight run pointless.
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: typecheck + test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # node:test and node:assert are the entire test dependency footprint.
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      # --ignore-workspace so the install resolves identically here and on a
+      # developer machine, where this repo sits inside the lossless-monorepo
+      # pnpm workspace and would otherwise pull in sibling projects.
+      - name: Install
+        run: pnpm install --frozen-lockfile --ignore-workspace
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit -p tsconfig.json
+
+      # `pnpm test` builds first on purpose: the suite imports from dist/, so a
+      # run exercises the barrel exports, the tsup entry map and the built
+      # output rather than only the TypeScript.
+      - name: Test
+        run: pnpm test
+
+  publishable:
+    name: jsr dry run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile --ignore-workspace
+
+      # Catches two things that are invisible until you actually publish, and
+      # that we have already been bitten by once each: a slow-types error in
+      # the public API, and an entrypoint declared in deno.json that does not
+      # resolve. The export map itself is covered by test/export-parity, but
+      # only this proves JSR accepts the result.
+      - name: jsr publish --dry-run
+        run: pnpx jsr publish --dry-run --allow-dirty
