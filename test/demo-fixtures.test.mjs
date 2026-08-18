@@ -221,21 +221,59 @@ test('the plantuml fixture yields drawable urls', async () => {
 });
 
 test('the json canvas fixture carries geometry the page draws an SVG from', async () => {
-  // The page builds a dependency-free SVG straight from this payload, so the
-  // nodes need x/y/width/height and the edges need resolvable endpoints.
+  // The page builds a dependency-free SVG straight from this payload, so every
+  // node needs a box and every edge needs endpoints that resolve.
   const tree = await parse(byId['fence-jsoncanvas']);
   const { parsed } = findAll(tree, (n) => n.type === 'code')[0].data.fence;
-  assert.ok(parsed.nodes.length >= 2);
+
+  assert.ok(parsed.nodes.length >= 15, 'a two-box canvas does not show what a canvas is for');
   for (const n of parsed.nodes) {
     for (const k of ['x', 'y', 'width', 'height']) {
       assert.equal(typeof n[k], 'number', `node ${n.id} has no ${k}; the SVG cannot be laid out`);
     }
-    assert.ok(n.text, `node ${n.id} has no label`);
   }
+
   const ids = new Set(parsed.nodes.map((n) => n.id));
+  assert.ok(parsed.edges.length >= 10, 'edges are what make a canvas readable');
   for (const e of parsed.edges) {
     assert.ok(ids.has(e.fromNode) && ids.has(e.toNode), `edge ${e.id} points at a missing node`);
   }
+});
+
+test('the canvas fixture exercises the parts of the spec worth showing', async () => {
+  // Guards the fixture rather than the parser: simplify this canvas and the
+  // demo silently stops demonstrating groups, sides or colours.
+  const tree = await parse(byId['fence-jsoncanvas']);
+  const { parsed } = findAll(tree, (n) => n.type === 'code')[0].data.fence;
+
+  const groups = parsed.nodes.filter((n) => n.type === 'group');
+  assert.ok(groups.length >= 3, 'groups are the structural feature of a canvas');
+  assert.ok(groups.every((g) => g.label), 'an unlabelled group renders as an empty box');
+
+  const items = parsed.nodes.filter((n) => n.type !== 'group');
+  assert.ok(items.every((n) => n.text), 'every drawable node needs a label');
+
+  // Every group should actually contain something, or the frame is decoration.
+  for (const g of groups) {
+    const inside = items.filter((n) =>
+      n.x >= g.x && n.y >= g.y && n.x + n.width <= g.x + g.width && n.y + n.height <= g.y + g.height);
+    assert.ok(inside.length > 0, `group "${g.label}" contains no nodes`);
+  }
+
+  const sided = parsed.edges.filter((e) => e.fromSide && e.toSide);
+  assert.ok(sided.length >= 10, 'fromSide/toSide is what makes the routing look deliberate');
+  assert.ok(parsed.edges.some((e) => e.label), 'at least one edge should explain itself');
+  assert.ok(parsed.nodes.some((n) => n.color), 'colour is part of the spec and worth demonstrating');
+});
+
+test('the canvas fixture leaks no internal paths or wikilinks', async () => {
+  // It was converted from a real Obsidian canvas whose nodes were `file` nodes
+  // pointing at internal documents. Those became plain `text` labels.
+  const raw = byId['fence-jsoncanvas'].body;
+  assert.ok(!raw.includes('"type": "file"'), 'file nodes reference internal documents');
+  assert.ok(!/\[\[/.test(raw), 'a wikilink survived the conversion');
+  assert.ok(!/"file"\s*:/.test(raw), 'a file path survived the conversion');
+  assert.ok(!raw.includes('.md'), 'a document path survived the conversion');
 });
 
 test('the vega-lite fixture summarizes to something worth showing', async () => {
