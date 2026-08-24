@@ -9,7 +9,7 @@ date_created: 2026-08-23
 date_modified: 2026-08-23
 date_authored_initial_draft: 2026-08-23
 date_authored_current_draft: 2026-08-23
-at_semantic_version: 0.0.0.1
+at_semantic_version: 0.0.0.2
 status: Draft
 category: Spec
 authors:
@@ -45,17 +45,54 @@ The proposal is a **policy layer expressed as data** that produces the function
 the plugin already wants: the site supplies routing config, LFM supplies the
 mechanics. Opt-in, in the same way `codeFences` and `ogFetch` are.
 
-## Correction to this document's own title
+## Two senses of "relative", and both matter
 
-The filename says *relative paths*. **Relative paths are not the driver.**
+An earlier draft of this stub "corrected" its own filename, asserting that
+relative paths were not the driver because the corpus contains zero `../` or
+`./` links. **That correction was wrong.** It read *relative* in the filesystem
+sense when the Obsidian sense is the operative one. Kept here rather than
+quietly deleted, because the misreading is an easy one to repeat.
 
-Measured across the Lossless `content` vault on 2026-08-23: there are **zero**
-literal `../` or `./` wikilinks in 13,846 links. Supporting them is cheap and
-worth doing for authoring futures, but prioritising this work on that basis
-would be prioritising it on a non-problem.
+**Vault-relative — the whole corpus.** Every Obsidian wikilink is a path
+relative to the vault root. `[[Vocabulary/Build Systems]]` means
+*vault-root/Vocabulary/Build Systems*, not a filesystem path. Mapping those
+onto site routes is the entire job, and it is what this document's filename
+means. All 13,846 links are relative paths in this sense.
 
-The actual driver is **bare names** — `[[DevOps]]` with no folder segment at
-all — which a prefix matcher cannot resolve by construction.
+**Document-relative — supported, not currently exercised.** Obsidian's *new
+link format* setting can emit `../concepts/Foo`, resolved against the linking
+document rather than the vault root. This vault emits none today (measured
+2026-08-23), but that is a property of one vault's settings, not of the format.
+A resolver must handle them — which means **it must know which document a link
+was written in.** See the unresolved-link contract below, which needs the same
+thing for a different reason.
+
+**Bare names — 28%, and the hardest case.** `[[DevOps]]`, no folder segment at
+all. Obsidian resolves these by shortest-unique-path against its vault index; a
+prefix matcher cannot see them by construction.
+
+## The unresolved-link contract
+
+Settled 2026-08-23. Not a design question — a requirement any implementation
+inherits.
+
+1. **Never fail the build.** An unresolvable link is a content problem, not a
+   compile error. A vault of thousands of hand-edited files always has some.
+2. **Log the path that could not be resolved, and the document it appears in.**
+   Either alone is close to useless.
+3. **Render as plain text, not a hyperlink.** No anchor, no bracket syntax.
+
+Points 1 and 3 are already `remarkLfmWikilinks` behaviour. **Point 2 is not
+currently expressible through its API**, and closing that gap may be worth more
+than the resolver itself, because it turns a silent failure into a worklist:
+
+- `onUnresolved` receives `WikilinkResolverInput` — `{ path, anchor, display,
+  raw }`. No source document.
+- The transformer is declared `function transformer(tree: Root)`. Remark passes
+  `(tree, file)`; the `VFile` carrying `path` / `history` is never taken.
+
+Additive fix, independent of everything else in this spec, and shippable on its
+own.
 
 ## The measurements that motivate it
 
@@ -101,9 +138,9 @@ before relying on any of these.
       (Prototype defaults to plain text; that choice is not settled.)
 - [ ] Does an index belong in the package's contract at all, given LFM has so
       far been careful to know nothing about the filesystem?
-- [ ] Should unresolved wikilinks be **loud** — a build-time warning or count —
-      rather than silently rendering as prose? Arguably the more valuable half
-      of this whole problem, and independent of the resolver.
+- [ ] How should the source document reach `onUnresolved` — widen
+      `WikilinkResolverInput`, add a second argument, or hand the resolver the
+      `VFile`? Affects the public type shape either way.
 - [ ] What settles destinations that an index cannot know (API-backed, or a
       sibling site's route table)? A queue and a post-build pass, an SSR route,
       or out of scope?
