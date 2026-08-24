@@ -7,9 +7,9 @@
  * `pnpm test` builds first for exactly this reason.
  */
 
-import { parseMarkdown } from '../dist/index.js';
+import { parseMarkdown, createPathResolver } from '../dist/index.js';
 
-export { parseMarkdown };
+export { parseMarkdown, createPathResolver };
 
 /** Every node in the tree matching `pred`, in document order. */
 export function findAll(node, pred, out = []) {

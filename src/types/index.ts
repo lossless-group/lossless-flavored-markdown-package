@@ -13,6 +13,8 @@
  * ```
  */
 
+import type { PathResolver, PathResolverConfig } from '../utils/resolve-path.js';
+
 /**
  * The normalized component node that ALL trigger syntaxes produce.
  * Directive syntax, Markdoc tags, MDX-lite tags, code fence identifiers,
@@ -256,9 +258,39 @@ export interface WikilinkResolution {
  * Options for the `remarkLosslessWikilinks` plugin.
  */
 export interface WikilinkOptions {
-  /** Site-supplied resolver. Returns a resolution, or `null` to render
-   *  the wikilink as plain display text (no anchor, no class). */
-  resolver: (input: WikilinkResolverInput) => WikilinkResolution | null;
+  /**
+   * Site-supplied resolver. Returns a resolution, or `null` to render the
+   * wikilink as plain display text (no anchor, no class).
+   *
+   * Exactly one of `resolver` or `paths` is required. `resolver` wins if both
+   * are given — a hand-written function is a deliberate act and should not be
+   * silently overridden by config.
+   */
+  resolver?: (input: WikilinkResolverInput) => WikilinkResolution | null;
+  /**
+   * Declarative alternative to `resolver` — Obsidian-style path resolution
+   * expressed as data instead of `if`-branches.
+   *
+   * Accepts either a `PathResolver` built with `createPathResolver()`, or the
+   * bare config object, in which case the plugin builds one. Supplying an
+   * index unlocks bare `[[Page]]` links (28% of a real vault's wikilinks);
+   * without one you still get routing, case-folding and separator-folding.
+   *
+   * @example
+   * ```ts
+   * wikilinks: {
+   *   paths: {
+   *     index: vaultPaths,
+   *     routes: [
+   *       { match: ['concepts', 'vocabulary', 'organizations', 'sources'],
+   *         to: 'https://www.lossless.group/more-about/{slug}' },
+   *       { match: 'tooling', to: '/tools/{slug}' },
+   *     ],
+   *   },
+   * }
+   * ```
+   */
+  paths?: PathResolver | PathResolverConfig;
   /** Optional. Called once per unresolved wikilink — typically pipes into
    *  a build-time audit log. Errors thrown here are swallowed so a bad
    *  callback never breaks parsing. */

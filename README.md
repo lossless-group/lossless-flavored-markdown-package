@@ -388,6 +388,126 @@ const resolver = (input: WikilinkResolverInput): WikilinkResolution | null => {
 
 Adding a destination is then six lines in the rule array. The reference implementation in `mpstaton-site` adds two more rule shapes (`ExactRule` for one-off overrides, `DeferredRule` for "deliberately parked, don't keep showing up as untouched"). Both are optional.
 
+## Path resolution (the declarative half of wikilinks)
+
+`remarkLfmWikilinks` owns wikilink *syntax* and delegates *destinations* to a site-supplied `resolver`. That split is right, and it left something unaddressed: almost every consumer then writes the same resolver, by hand, as a chain of `if (path.startsWith(...))` branches that handles the paths its author happened to think of and silently drops the rest.
+
+`createPathResolver` is the missing half — resolution as **data you configure**, not code you write. Three layers, three owners: the plugin owns syntax, this owns mechanics, your site owns a config object.
+
+**It is opt-in exactly like `codeFences` and `ogFetch`.** Omit it and nothing changes.
+
+```ts
+import { parseMarkdown } from '@lossless-group/lfm';
+
+const tree = await parseMarkdown(content, {
+  wikilinks: {
+    paths: {
+      index: vaultPaths,           // string[] — one readdir sweep at build time
+      routes: [
+        // Four vault folders, one public index.
+        { match: ['concepts', 'vocabulary', 'organizations', 'sources'],
+          to: 'https://www.lossless.group/more-about/{slug}' },
+        { match: 'tooling',  to: '/tools/{slug}' },
+        { match: 'essays',   to: '/essays/{slug}' },
+      ],
+    },
+  },
+});
+```
+
+### Why an index, and not just prefix rules
+
+Measured across the Lossless `content` vault (4,702 files, 13,846 wikilinks), 2026-08-23:
+
+| Fact | Value | Consequence |
+|---|---|---|
+| Wikilinks with **no folder at all** — `[[DevOps]]` | 3,839 — **28%** | A prefix-matching resolver cannot see a quarter of the corpus |
+| Basenames **globally unique** in the vault | 4,622 of 4,702 — **98.4%** | Basename resolution is safe far more often than not |
+| Basenames that **collide** | 73 (153 files) | …but not always. Ambiguity is reported, never guessed |
+| Bare wikilinks that actually hit a collision | 25 of 3,839 — **0.7%** | The dangerous case is rare, and it is handled |
+| Pathed links hitting an **exact** vault path | 8,956 of 9,973 — **89.8%** | The common case is cheap |
+| Case drift on segment one | `Tooling` 3,591 vs `tooling` 38 | Case-insensitive by default, not by option |
+| Separator drift | `lost-in-public` 179 vs `Lost in Public` 8 | ` `, `-`, `_` are equivalent, not merely trimmed |
+| Literal `../` or `./` links | **0** | Relative support is for authoring futures, not present pain |
+
+### The cascade
+
+Each tier is more speculative than the last, and every result reports which one answered (`via`), so a site can trust exact hits and audit the guesses:
+
+| Tier | Matches | Rescues |
+|---|---|---|
+| `exact` | the normalised path is a vault file, verbatim | the 90% case |
+| `suffix` | the path is a trailing run of segments of exactly one file | links written before a reorganisation |
+| `basename` | the final segment names exactly one file | **the 28% of bare `[[Page]]` links** |
+| `route` | nothing in the index — fall through to prefix rules | vaults with no index supplied |
+
+**A tier matching more than one file does not fall through.** It stops, reports `ambiguous`, and resolves to nothing — so the wikilink renders as plain text with no anchor. A link that is wrong in a way nobody notices is worse than no link. That also means a `*` catch-all route will *not* rescue a collision.
+
+### Performance — it is a Map, not a grep
+
+The worry this design answers explicitly: resolving per-link by globbing or fuzzy-matching would make a build crawl. Nothing here scans per link. The index is three `Map`s built once; each resolution is a handful of `Map.get()` calls.
+
+Measured on the full vault above:
+
+```
+fs walk (the site does this)  : 15.5 ms
+index build (once)            : 13.4 ms
+resolve ALL 13,812 wikilinks  : 70.3 ms   →  5.09 µs per link
+```
+
+**~100ms added to a whole-corpus build.** No queue is needed to make this fast; it already is.
+
+### Deferral — for destinations an index genuinely cannot know
+
+Deferral exists for the case where the answer is not on disk: a destination behind an API, in a sibling site's route table, or in content that has not been built yet.
+
+```ts
+paths: {
+  index: vaultPaths,
+  routes: [...],
+  deferred: { to: '/link-resolve?p={path}', when: 'both', classes: ['is-provisional'] },
+}
+```
+
+Unresolvable paths get a placeholder URL — point it at an SSR route to settle at request time — and land on a deduplicated, frequency-sorted worklist for a post-build rewrite pass:
+
+```ts
+const resolver = createPathResolver({ ... });
+// …after the build has walked every document:
+for (const entry of resolver.deferred()) {
+  // { input, reason, url, candidates?, count }
+}
+```
+
+### Everything is configuration
+
+There is no policy baked into the package. Every judgment call is a field:
+
+| Option | Default | Controls |
+|---|---|---|
+| `routes` | — | vault prefix(es) → destination template. First match wins; `'*'` is a catch-all; `to: null` deliberately parks a path |
+| `index` | none | the vault sweep that unlocks bare names |
+| `cascade` | `['exact','suffix','basename']` | which tiers to attempt, in order. `['exact','basename']` is a real preference, not a threshold |
+| `onAmbiguous` | `'plain'` | `'plain'` \| `'first'` \| your own `(input, candidates) => file \| null` |
+| `slugFrom` | `'basename'` | what `{slug}` means — `'basename'` \| `'tail'` \| `'full'` \| a function. Overridable per route |
+| `tokens` | `{}` | extra `{token}` expansions beyond `{slug} {name} {path} {tail} {dir} {prefix}` |
+| `base` | none | strip a mount prefix, so a vault at `src/generated-content/` routes as though at the root |
+| `looseSeparators` | `true` | treat ` `, `-`, `_` as the same character |
+| `caseSensitive` | `false` | match case-sensitively |
+| `extensions` | `['.md','.mdx']` | stripped before matching |
+| `slugify` / `display` | house defaults | override the slugifier or the display-text derivation |
+| `preferAuthorDisplay` | `true` | whether an explicit `\|Display` beats the derived one |
+| `deferred` | none | placeholder template + the post-build queue |
+| `onDiagnostic` | none | every failure, with candidates on `ambiguous` |
+
+`resolve()` takes a plain string and returns a plain result, so it is **not wikilink-specific** — the same "a human wrote a vault path, where does that live?" problem applies to image `src`, plain link targets, and frontmatter cross-references. `toWikilinkResolver()` is a thin adapter, not the main interface.
+
+### Result against the real corpus
+
+With the four routes above and no catch-all: **79% of 13,812 wikilinks resolve** — 8,346 exact, 2,115 by bare name, 445 by route. 44 collisions correctly become plain text. The rest are reported as `not-in-index` (mostly genuinely dangling) or `no-route` (folders those four rules don't claim).
+
+Against a plugin whose stated operating principle is *supporting 40% of intended wikilinks is better than supporting none*, that is the difference between a vault that links and one that doesn't.
+
 ## Code-fence formats (diagrams, schemas, UML)
 
 A fenced code block is a natural place to author a diagram, and every project ends up hand-wiring a routing table inside its renderer to handle `mermaid`. `remark-code-fences` replaces that table with a registry that **ships empty** — it knows no formats until you name them, so a splash page never carries diagram knowledge it doesn't use.
