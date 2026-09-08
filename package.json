@@ -48,8 +48,8 @@
     "test": "pnpm build && node --test test/*.test.mjs",
     "test:only": "node --test test/*.test.mjs",
     "lfm:gh": "pnpm build && if npm view \"@lossless-group/lfm@$(node -p \"require('./package.json').version\")\" version --registry=https://npm.pkg.github.com \"--//npm.pkg.github.com/:_authToken=$(gh auth token)\" >/dev/null 2>&1; then echo \"GitHub Packages: version already published, skipping\"; else npm publish --registry=https://npm.pkg.github.com \"--//npm.pkg.github.com/:_authToken=$(gh auth token)\"; fi",
-    "lfm:jsr": "pnpx jsr publish",
-    "lfm:publish": "pnpm lfm:gh && pnpm lfm:jsr"
+    "lfm:jsr": "bash scripts/publish-jsr.sh",
+    "lfm:publish": "pnpm lfm:gh || true; pnpm lfm:jsr"
   },
   "dependencies": {
     "remark-directive": "^3.0.0",
