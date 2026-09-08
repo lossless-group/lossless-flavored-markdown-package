@@ -17,6 +17,7 @@ export default defineConfig({
     'plugins/lfm-og-fetcher': 'src/plugins/lfm-og-fetcher.ts',
     'plugins/lfm-link-preview': 'src/plugins/lfm-link-preview.ts',
     'utils/classify-link': 'src/utils/classify-link.ts',
+    'utils/resolve-path': 'src/utils/resolve-path.ts',
     'utils/og-cache': 'src/utils/og-cache.ts',
     'utils/og-dispatcher': 'src/utils/og-dispatcher.ts',
     'utils/og-backends/index': 'src/utils/og-backends/index.ts',

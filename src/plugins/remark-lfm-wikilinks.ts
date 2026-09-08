@@ -31,7 +31,8 @@
 
 import type { Root, Link } from 'mdast';
 import type { Plugin } from 'unified';
-import type { WikilinkOptions, WikilinkResolverInput } from '../types/index.js';
+import type { WikilinkOptions, WikilinkResolverInput, WikilinkResolution } from '../types/index.js';
+import { createPathResolver } from '../utils/resolve-path.js';
 
 // Group 1: path. Group 2: optional #anchor. Group 3: optional |display.
 // `[\w-]+` accepts hyphenated path segments matching the same broadening
@@ -101,15 +102,42 @@ function slugifyAnchor(s: string): string {
  * });
  * ```
  */
+/**
+ * Pick the resolver: an explicit function always wins over declarative
+ * `paths`, because a hand-written resolver is a deliberate act and should
+ * never be silently overridden by config that happens to also be present.
+ *
+ * `paths` accepts either a built `PathResolver` (shared across several
+ * pipelines, so its index is built once) or the bare config object, which is
+ * the ergonomic form — no import needed at the call site.
+ */
+function selectResolver(
+  options: WikilinkOptions | undefined,
+): ((input: WikilinkResolverInput) => WikilinkResolution | null) | null {
+  if (!options) return null;
+  if (typeof options.resolver === 'function') return options.resolver;
+  if (options.paths) {
+    const p = options.paths;
+    const resolverHost =
+      typeof (p as { toWikilinkResolver?: unknown }).toWikilinkResolver === 'function'
+        ? (p as import('../utils/resolve-path.js').PathResolver)
+        : createPathResolver(p as import('../utils/resolve-path.js').PathResolverConfig);
+    return resolverHost.toWikilinkResolver();
+  }
+  return null;
+}
+
 export const remarkLfmWikilinks: Plugin<[WikilinkOptions], Root> = function (options) {
-  if (!options || typeof options.resolver !== 'function') {
+  const selected = selectResolver(options);
+  if (!selected) {
     throw new Error(
-      'remarkLosslessWikilinks: a `resolver` function is required. ' +
+      'remarkLfmWikilinks: supply either a `resolver` function or a `paths` config. ' +
       'See https://jsr.io/@lossless-group/lfm for the resolver contract.'
     );
   }
 
-  const { resolver, onUnresolved } = options;
+  const resolver: (input: WikilinkResolverInput) => WikilinkResolution | null = selected;
+  const onUnresolved = options?.onUnresolved;
 
   return function transformer(tree: Root) {
     // Hand-rolled walker — matches the convention in remark-lfm-callouts.ts and
