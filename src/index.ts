@@ -94,6 +94,33 @@ export type {
   CarouselSort,
 } from './plugins/lfm-image-carousel.js';
 
+/** Vault-path → site-route resolver. The declarative half of wikilink
+ *  resolution: normalisation, the index cascade (exact → suffix → basename),
+ *  relative paths, and template expansion, so sites supply config rather than
+ *  a hand-written resolver function. Opt-in; omit it and nothing changes. */
+export { createPathResolver, slugifyPath } from './utils/resolve-path.js';
+
+export type {
+  /** Declarative configuration for `createPathResolver`. */
+  PathResolverConfig,
+  /** One routing rule — vault prefix(es) → destination template. */
+  PathRoute,
+  /** The object `createPathResolver` returns. */
+  PathResolver,
+  /** A successful resolution, including which cascade tier answered. */
+  ResolvedPath,
+  /** Which tier answered: exact | suffix | basename | route. */
+  ResolutionTier,
+  /** Why a resolution failed, or that a route deliberately parked it. */
+  PathDiagnostic,
+  /** Decomposed path handed to slug strategies and templates. */
+  PathParts,
+  /** What `{slug}` means for a route. */
+  SlugStrategy,
+  /** Optional per-call context — the document the link was written from. */
+  ResolveContext,
+} from './utils/resolve-path.js';
+
 /** URL classifier — turns a raw URL into provider/kind metadata via the catalog matchers. */
 export { classifyLink, getBareLinkUrl, collectLinkNodes } from './utils/classify-link.js';
 
