@@ -417,16 +417,16 @@ const tree = await parseMarkdown(content, {
 
 ### Why an index, and not just prefix rules
 
-Measured across the Lossless `content` vault (4,702 files, 13,846 wikilinks), 2026-08-23:
+Measured across the Lossless `content` vault (4,702 files, 13,556 navigational wikilinks — `![[embeds]]` excluded, since the resolver is never asked to route one). Re-derived 2026-09-08 with `node scripts/measure-vault.mjs`, which is committed: **re-run it rather than trusting this table.** The corpus moves under authors' hands, so these will drift. If a default stops following from the numbers, change the default.
 
 | Fact | Value | Consequence |
 |---|---|---|
-| Wikilinks with **no folder at all** — `[[DevOps]]` | 3,839 — **28%** | A prefix-matching resolver cannot see a quarter of the corpus |
-| Basenames **globally unique** in the vault | 4,622 of 4,702 — **98.4%** | Basename resolution is safe far more often than not |
-| Basenames that **collide** | 73 (153 files) | …but not always. Ambiguity is reported, never guessed |
-| Bare wikilinks that actually hit a collision | 25 of 3,839 — **0.7%** | The dangerous case is rare, and it is handled |
-| Pathed links hitting an **exact** vault path | 8,956 of 9,973 — **89.8%** | The common case is cheap |
-| Case drift on segment one | `Tooling` 3,591 vs `tooling` 38 | Case-insensitive by default, not by option |
+| Wikilinks with **no folder at all** — `[[DevOps]]` | 3,624 — **26.7%** | A prefix-matching resolver cannot see a quarter of the corpus |
+| Files whose basename is **unique** in the vault | 4,563 of 4,702 — **97.0%** | Basename resolution is safe far more often than not |
+| Basenames that **collide** | 66 (139 files) | …but not always. Ambiguity is reported, never guessed |
+| Bare wikilinks that actually hit a collision | 17 of 3,624 — **0.5%** | The dangerous case is rare, and it is handled |
+| Pathed links hitting an **exact** vault path | 9,108 of 9,932 — **91.7%** | The common case is cheap |
+| Case drift on segment one | `Tooling` 3,572 vs `tooling` 38 | Case-insensitive by default, not by option |
 | Separator drift | `lost-in-public` 179 vs `Lost in Public` 8 | ` `, `-`, `_` are equivalent, not merely trimmed |
 | Literal `../` or `./` links | **0** | Relative support is for authoring futures, not present pain |
 
@@ -450,9 +450,9 @@ The worry this design answers explicitly: resolving per-link by globbing or fuzz
 Measured on the full vault above:
 
 ```
-fs walk (the site does this)  : 15.5 ms
-index build (once)            : 13.4 ms
-resolve ALL 13,812 wikilinks  : 70.3 ms   →  5.09 µs per link
+fs walk (the site does this)  : 16.7 ms
+index build (once)            : 21.9 ms
+resolve ALL 13,556 wikilinks  : 103.7 ms  →  7.65 µs per link
 ```
 
 **~100ms added to a whole-corpus build.** No queue is needed to make this fast; it already is.
@@ -504,7 +504,7 @@ There is no policy baked into the package. Every judgment call is a field:
 
 ### Result against the real corpus
 
-With the four routes above and no catch-all: **79% of 13,812 wikilinks resolve** — 8,346 exact, 2,115 by bare name, 445 by route. 44 collisions correctly become plain text. The rest are reported as `not-in-index` (mostly genuinely dangling) or `no-route` (folders those four rules don't claim).
+With the four routes above and no catch-all: **79.2% of 13,556 wikilinks resolve** — 8,200 exact, 2,094 by bare name, 441 by route, 3 by suffix. 42 collisions correctly become plain text. The rest are reported as `not-in-index` (mostly genuinely dangling) or `no-route` (folders those four rules don't claim).
 
 Against a plugin whose stated operating principle is *supporting 40% of intended wikilinks is better than supporting none*, that is the difference between a vault that links and one that doesn't.
 

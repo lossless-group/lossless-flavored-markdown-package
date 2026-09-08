@@ -5,14 +5,14 @@ title: "Maintain Path Resolution for Wikilinks"
 lede: "How vault paths become site routes — the index cascade, why ambiguity refuses to guess, and the rule that every judgment call is a config field rather than a decision baked into the package."
 publish: true
 date_created: 2026-08-23
-date_modified: 2026-08-23
+date_modified: 2026-09-08
 date_authored_initial_draft: 2026-08-23
 date_authored_current_draft: 2026-08-23
 authors:
   - Michael Staton
 augmented_with:
   - Claude Code on Opus 5 (1M context)
-at_semantic_version: 0.0.1.0
+at_semantic_version: 0.0.1.1
 status: Signed-Off
 tags:
   - Wikilinks
@@ -41,20 +41,20 @@ The plugin has always delegated destinations, correctly — they are per-site. W
 
 ## Measure before changing anything here
 
-Every default in this module was chosen from a measurement, not from taste. Re-measure before overriding one. The 2026-08-23 baseline, across `content/` — 4,702 files, 13,846 wikilinks:
+Every default in this module was chosen from a measurement, not from taste. Re-measure before overriding one — `node scripts/measure-vault.mjs` reproduces every row below and is committed for exactly that reason. The 2026-09-08 baseline, across `content/` — 4,702 files, 13,556 navigational wikilinks (`![[embeds]]` excluded):
 
 | Fact | Value | What it decided |
 |---|---|---|
-| Wikilinks with no folder | 3,839 — **28%** | there is an index at all |
-| Basenames globally unique | 4,622 of 4,702 — **98.4%** | `basename` is in the default cascade |
-| Colliding basenames | 73 (153 files) | ambiguity refuses to guess |
-| Bare links hitting a collision | 25 — **0.7%** | the refusal costs almost nothing |
-| Exact-path hits among pathed links | **89.8%** | `exact` is tier one |
-| Case drift | `Tooling` 3,591 / `tooling` 38 | `caseSensitive: false` default |
+| Wikilinks with no folder | 3,624 — **26.7%** | there is an index at all |
+| Files with a unique basename | 4,563 of 4,702 — **97.0%** | `basename` is in the default cascade |
+| Colliding basenames | 66 (139 files) | ambiguity refuses to guess |
+| Bare links hitting a collision | 17 — **0.5%** | the refusal costs almost nothing |
+| Exact-path hits among pathed links | **91.7%** | `exact` is tier one |
+| Case drift | `Tooling` 3,572 / `tooling` 38 | `caseSensitive: false` default |
 | Separator drift | `lost-in-public` 179 / `Lost in Public` 8 | `looseSeparators: true` default |
 | Literal `../` links | **0** | relative support exists but is never assumed |
 
-Reproduce with a `readdir` sweep plus `grep -rhoE '\[\[[^]]+\]\]'`. It takes about a minute and it is worth doing before any argument about defaults.
+Reproduce with `node scripts/measure-vault.mjs [vaultDir]` (add `--json` for machine-readable output). It takes about a second and it is worth doing before any argument about defaults. Earlier drafts of this table were produced by uncommitted throwaway scripts; that is what the committed script exists to prevent.
 
 ## The two invariants
 
@@ -75,9 +75,9 @@ If you find yourself writing an `if` that encodes a preference — which tier to
 The recurring worry is that build-time path resolution means a grep per link. It does not. The index is three `Map`s built once; each resolution is a few `Map.get()` calls.
 
 ```
-fs walk (the site does this)  : 15.5 ms
-index build (once)            : 13.4 ms
-resolve ALL 13,812 wikilinks  : 70.3 ms   →  5.09 µs per link
+fs walk (the site does this)  : 16.7 ms
+index build (once)            : 21.9 ms
+resolve ALL 13,556 wikilinks  : 103.7 ms  →  7.65 µs per link
 ```
 
 **Keep it that way.** Any change that makes resolution O(vault) per link — fuzzy matching, Levenshtein fallback, a `bySuffix` walk that scans rather than looks up — is a regression even if it raises the hit rate. The `bySuffix` map is already the expensive one to *build* (O(segments) entries per file); that cost is paid once and is fine. Paying it per link would not be.
@@ -97,3 +97,4 @@ Read the queue *after* the build has walked every document. It is a running tall
 - `changelog/2026-08-23_01.md` — the release, with the full measurement table
 - `context-v/blueprints/Naming-Plugins-Against-the-Remark-Ecosystem.md` — why this is `utils/`, not `plugins/`
 - `test/resolve-path.test.mjs` — 39 assertions; the two invariants above are pinned there
+- `scripts/measure-vault.mjs` — regenerates every number in this document
