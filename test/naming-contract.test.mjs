@@ -14,7 +14,7 @@
  *    existed.
  *
  * The tier assignment itself lives in
- * context-v/blueprints/Naming-Plugins-Against-the-Remark-Ecosystem.md.
+ * context-v/reminders/Naming-Plugins-Against-the-Remark-Ecosystem.md.
  */
 
 import { test } from 'node:test';

@@ -48,7 +48,7 @@ import type { LfmHeading, LfmHeadingNode, RemarkHeadingIdsOptions } from '../typ
  * its quirks — trailing-extension stripping and the 3+ dash collapse that
  * preserves deliberate `--` separators. Matching it exactly is what keeps
  * already-shared links landing. Do not "clean this up" without reading
- * context-v/Maintain-Heading-Anchors-and-Share-Links.md first.
+ * context-v/specs/Maintain-Heading-Anchors-and-Share-Links.md first.
  */
 export function slugifyHeading(input: string): string {
   return input

@@ -79,7 +79,7 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // the slug is computed from the text as authored. Enabled by default: an id
   // on a heading breaks nothing, and without it each site recomputes slugs
   // itself and they drift apart (see
-  // context-v/Maintain-Heading-Anchors-and-Share-Links.md).
+  // context-v/specs/Maintain-Heading-Anchors-and-Share-Links.md).
   if (opts.headingIds !== false) {
     processor.use(
       remarkLfmHeadingIds,

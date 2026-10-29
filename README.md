@@ -136,7 +136,7 @@ import { remarkLfmCallouts } from '@lossless-group/lfm';
 | lfm-image-carousel | `:::image-carousel` / `:::img-carousel` → one renderer-ready `data.carousel` payload with slides extracted and sequence variants ordered |
 | lfm-heading-blocks | `$$` eyebrow / `&&` subheading bound to the adjacent heading → one `<hgroup>`, plus `eyebrow` on the outline entry |
 
-Three prefixes, one rule. `remark-*` is the ecosystem's — `remark-gfm` and `remark-directive` are dependencies, not ours. `remark-lfm-*` means the remark ecosystem has a formal plugin for this capability and we do it our own way. `lfm-*` means we invented it — our syntax trigger, our handling, no upstream equivalent. Full rule: `context-v/blueprints/Naming-Plugins-Against-the-Remark-Ecosystem.md`.
+Three prefixes, one rule. `remark-*` is the ecosystem's — `remark-gfm` and `remark-directive` are dependencies, not ours. `remark-lfm-*` means the remark ecosystem has a formal plugin for this capability and we do it our own way. `lfm-*` means we invented it — our syntax trigger, our handling, no upstream equivalent. Full rule: `context-v/reminders/Naming-Plugins-Against-the-Remark-Ecosystem.md`.
 
 Everything renamed in 0.5.0 kept its old export name as a **permanent alias** — `remarkCallouts`, `remarkHeadingIds`, `remarkOgFetcher` and the rest all still resolve, and a test asserts they do. Nothing needs changing on upgrade; the names above are simply what to write in new code.
 

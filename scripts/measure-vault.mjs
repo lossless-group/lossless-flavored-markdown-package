@@ -3,7 +3,7 @@
  * measure-vault.mjs — reproduce every number quoted for path resolution.
  *
  * The measurement tables in README.md and in
- * `context-v/Maintain-Path-Resolution-for-Wikilinks.md` decided the defaults in
+ * `context-v/specs/Maintain-Path-Resolution-for-Wikilinks.md` decided the defaults in
  * `src/utils/resolve-path.ts`: whether there is an index at all, whether
  * `basename` is in the cascade, whether ambiguity refuses to guess, whether
  * matching is case- and separator-insensitive.

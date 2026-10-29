@@ -169,4 +169,4 @@ No source file changed. See `changelog/releases/0.5.1.md`.
 
 - `changelog/releases/0.4.1.md` — the release that introduced the registry, and documents the imports that don't work on JSR
 - [[Workspace-vs-JSR-for-LFM-Consumers]] — the other JSR-shaped consumer concern; about *pinning*, not export maps
-- `context-v/blueprints/Naming-Plugins-Against-the-Remark-Ecosystem.md` — the neighbouring "check before assuming what's public API" discipline
+- `context-v/reminders/Naming-Plugins-Against-the-Remark-Ecosystem.md` — the neighbouring "check before assuming what's public API" discipline
