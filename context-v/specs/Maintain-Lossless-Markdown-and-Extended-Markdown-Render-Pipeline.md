@@ -13,6 +13,7 @@ site_uuid: 27073fa4-51e7-43f1-a94a-52675cc101ab
 hex_code: f8wymw
 date_authored_initial_draft: 2025-12-10
 date_authored_current_draft: 2025-12-10
+type: Specs
 ---
 
 # Blueprint: How Lossless Renders Markdown and Extended Markdown

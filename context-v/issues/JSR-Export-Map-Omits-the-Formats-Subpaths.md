@@ -24,6 +24,7 @@ tags:
   - Code-Fences
   - Packaging
 image_prompt: "A shipping crate with six labelled compartments, four of them sealed shut with no handle, the goods visible through slats."
+type: Issues
 ---
 
 # JSR Export Map Omits the Formats Subpaths

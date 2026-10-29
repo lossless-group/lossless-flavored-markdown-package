@@ -23,6 +23,7 @@ square_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-D
 hex_code: 7jzs1x
 date_authored_initial_draft: 2025-07-29
 date_authored_current_draft: 2025-07-29
+type: Specs
 ---
 # Maintain Directives as part of our Extended Markdown
 

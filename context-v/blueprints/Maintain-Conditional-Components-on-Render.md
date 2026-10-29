@@ -21,6 +21,7 @@ site_uuid: bfa62998-210f-4fe5-86dc-a5377841834d
 hex_code: 6nkati
 date_authored_initial_draft: 2025-09-26
 date_authored_current_draft: 2025-09-26
+type: Blueprints
 ---
 
 # Task at Hand

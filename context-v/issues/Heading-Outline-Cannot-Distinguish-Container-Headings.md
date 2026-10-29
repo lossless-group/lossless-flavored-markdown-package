@@ -24,6 +24,7 @@ tags:
 image_prompt: "A nested set of glass display cases; inside the innermost one sits a numbered brass tag identical to the ones mounted on the outer cases, indistinguishable at a glance."
 date_authored_initial_draft: 2026-08-17
 date_authored_current_draft: 2026-08-17
+type: Issues
 ---
 
 # Heading Outline Cannot Distinguish Container Headings from Document Headings

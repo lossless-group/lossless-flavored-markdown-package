@@ -25,6 +25,7 @@ banner_image: https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Fi
 portrait_image: https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Figma-Object-Embeds-using-Embed-Kit_portrait_image_1755815950469_UsSm3cibW.webp
 square_image: https://ik.imagekit.io/xvpgfijuw/uploads/lossless/july/Maintain-Figma-Object-Embeds-using-Embed-Kit_square_image_1755815958668_1lRXdMK02.webp
 hex_code: w30d3g
+type: Specs
 ---
 
 

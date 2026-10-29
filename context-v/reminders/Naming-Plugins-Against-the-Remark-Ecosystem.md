@@ -23,6 +23,7 @@ tags:
   - Consumer-Contract
   - Public-API
 image_prompt: "Three brass library stamps of increasing width lined up on a workbench, each inked a different shade, the widest one straddling the seam between two open books."
+type: Reminders
 ---
 
 # Naming Plugins Against the Remark Ecosystem

@@ -21,6 +21,7 @@ tags:
 image_prompt: "A brass card catalogue whose drawers float free of the cabinet and arrange themselves into a nested tree in mid-air; one drawer is shaded, half-hidden inside a glass case."
 date_authored_initial_draft: 2026-08-17
 date_authored_current_draft: 2026-08-17
+type: Blueprints
 ---
 
 # Maintain Table of Contents from the Heading Outline

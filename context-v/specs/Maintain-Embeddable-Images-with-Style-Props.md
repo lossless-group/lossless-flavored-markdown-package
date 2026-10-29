@@ -29,6 +29,7 @@ image_prompt: "On the left, a computer monitor with a magazine style article, wi
 banner_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/2025-sept/Maintain-Embeddable-Images-with-Style-Props_banner_image_1758374365983_ahBWh35VX.webp"
 portrait_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/2025-sept/Maintain-Embeddable-Images-with-Style-Props_portrait_image_1758374375095_5bfFKKJl7.webp"
 square_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/2025-sept/Maintain-Embeddable-Images-with-Style-Props_square_image_1758374377020_0Ucrjgpq2.webp"
+type: Specs
 ---
 
 # Maintain Embeddable Images with Style Props

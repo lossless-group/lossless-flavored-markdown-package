@@ -21,6 +21,7 @@ tags:
   - Content-Pipeline
   - Obsidian
 summary: "The design record for src/utils/resolve-path.ts. Load before adding a tier to the cascade, before changing what happens on a basename collision, before adding a config option, or when a site asks why its bare [[Page]] links do or do not resolve."
+type: Specs
 ---
 
 # Maintain Path Resolution for Wikilinks

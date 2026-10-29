@@ -21,6 +21,7 @@ image_prompt: "A librarian robot pressing numbered brass tags into the spines of
 hex_code: sta43c
 date_authored_initial_draft: 2026-08-08
 date_authored_current_draft: 2026-08-08
+type: Specs
 ---
 
 # Maintain Heading Anchors and Share Links
