@@ -10,7 +10,8 @@ at_semantic_version: 0.0.0.1
 authors:
   - Michael Staton
 status: In-Progress
-augmented_with: "Windsurf Cascade on Claude 3.5 Sonnet"
+augmented_with:
+  - "Windsurf Cascade on Claude 3.5 Sonnet"
 category: Explorations
 tags: [Remark, Astro, AST, Debug]
 date_created: 2025-04-02

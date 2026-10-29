@@ -7,7 +7,8 @@ slug: maintain-extended-markdown-render-pipeline
 at_semantic_version: 0.0.0.1
 authors:
   - Michael Staton
-augmented_with: "Windsurf Cascade on GPT 5.1"
+augmented_with:
+  - "Windsurf Cascade on GPT 5.1"
 tags: [Markdown, Extended-Markdown, Render-Pipeline]
 site_uuid: 27073fa4-51e7-43f1-a94a-52675cc101ab
 hex_code: f8wymw

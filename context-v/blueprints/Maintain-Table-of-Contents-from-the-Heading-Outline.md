@@ -10,7 +10,8 @@ slug: maintain-table-of-contents-from-the-heading-outline
 at_semantic_version: 0.0.0.1
 authors:
   - Michael Staton
-augmented_with: "Claude Code on Opus 5"
+augmented_with:
+  - "Claude Code on Opus 5"
 tags:
   - Extended-Markdown
   - Render-Pipeline

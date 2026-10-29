@@ -11,7 +11,8 @@ lede: "Implement flexible layout component rendering with optional parameter con
 slug: conditional-component-rendering-layout-pipelines
 at_semantic_version: 0.0.1.0
 usageCount: "1"
-augmented_with: "Claude 4 Sonnet on Trae IDE"
+augmented_with:
+  - "Claude 4 Sonnet on Trae IDE"
 publish: true
 image_prompt: "A set of UI Components are going through a pipeline diagrammed as a conditional workflow."
 banner_image: "https://ik.imagekit.io/xvpgfijuw/uploads/lossless/2025-sept/Maintain-Conditional-Components-on-Render.md_banner_image_1758919404148_K8_4JLgGX.webp"

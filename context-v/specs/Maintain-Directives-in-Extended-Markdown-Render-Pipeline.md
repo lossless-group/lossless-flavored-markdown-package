@@ -9,7 +9,8 @@ slug: maintain-directives-in-extended-markdown-render-pipeline
 at_semantic_version: 0.0.0.1
 authors:
   - Michael Staton
-augmented_with: "Claude Code on Claude Sonnet 4"
+augmented_with:
+  - "Claude Code on Claude Sonnet 4"
 tags:
   - Directives
   - Extended-Markdown

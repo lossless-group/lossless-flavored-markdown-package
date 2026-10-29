@@ -12,7 +12,8 @@ status: Resolved
 category: Issue Resolution
 authors:
   - Michael Staton
-augmented_with: "Claude Code on Opus 5"
+augmented_with:
+  - "Claude Code on Opus 5"
 tags:
   - Extended-Markdown
   - Render-Pipeline

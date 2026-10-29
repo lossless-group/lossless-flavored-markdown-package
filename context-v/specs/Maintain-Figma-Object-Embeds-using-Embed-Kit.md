@@ -13,7 +13,8 @@ slug: maintain-figma-object-embeds-using-embed-kit
 at_semantic_version: 0.0.0.1
 authors:
   - Michael Staton
-augmented_with: Warp on Claude Sonnet 4.0
+augmented_with:
+  - Warp on Claude Sonnet 4.0
 tags:
   - Figma
   - Embed-Kit

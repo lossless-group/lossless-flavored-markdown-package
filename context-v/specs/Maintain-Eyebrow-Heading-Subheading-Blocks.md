@@ -11,7 +11,8 @@ at_semantic_version: 0.0.1.0
 status: Proposed
 authors:
   - Michael Staton
-augmented_with: "Claude Code on Opus 5"
+augmented_with:
+  - "Claude Code on Opus 5"
 tags:
   - Extended-Markdown
   - Render-Pipeline

@@ -9,7 +9,8 @@ slug: maintain-heading-anchors-and-share-links
 at_semantic_version: 0.0.0.1
 authors:
   - Michael Staton
-augmented_with: "Claude Code on Opus 5"
+augmented_with:
+  - "Claude Code on Opus 5"
 tags:
   - Extended-Markdown
   - Render-Pipeline
