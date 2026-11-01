@@ -7,4 +7,5 @@
 * [Maintain Heading Anchors And Share Links](Maintain-Heading-Anchors-and-Share-Links.md) - A fragment URL is a public contract, and we currently ship two incompatible definitions of it. This moves anchor identity into LFM as data, leaves the share affordance in the render layer, and fixes collisions nobody is handling.
 * [Maintain an Elegant Markdown and Extended Markdown Render Pipeline](Maintain-Lossless-Markdown-and-Extended-Markdown-Render-Pipeline.md)
 * [Maintain Path Resolution for Wikilinks](Maintain-Path-Resolution-for-Wikilinks.md) - How vault paths become site routes — the index cascade, why ambiguity refuses to guess, and the rule that every judgment call is a config field rather than a decision baked into the package.
+* [Maintain Project Task Management with LFM](Maintain-Project-Task-Management-w-LFM.md) - One checkbox line that reads correctly in Obsidian and on GitHub, and only becomes queryable data when LFM is asked.
 * [Render AST in Debug](Render-AST-in-Debug.md) - Exploration of AST structure at each stage of markdown processing to understand how to handle callouts
