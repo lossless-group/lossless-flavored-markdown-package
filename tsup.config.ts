@@ -5,6 +5,7 @@ export default defineConfig({
     'index': 'src/index.ts',
     'parse': 'src/parse.ts',
     'preset': 'src/preset.ts',
+    'cli/lfm-tasks': 'src/cli/lfm-tasks.ts',
     'types/index': 'src/types/index.ts',
     'plugins/remark-lfm-callouts': 'src/plugins/remark-lfm-callouts.ts',
     'plugins/remark-lfm-code-fences': 'src/plugins/remark-lfm-code-fences.ts',

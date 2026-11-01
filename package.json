@@ -1,6 +1,6 @@
 {
   "name": "@lossless-group/lfm",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Lossless Flavored Markdown \u2014 a polyglot extended markdown pipeline for remark/rehype",
   "type": "module",
   "main": "./dist/index.js",
@@ -35,6 +35,9 @@
       "import": "./dist/formats/plantuml.js",
       "types": "./dist/formats/plantuml.d.ts"
     }
+  },
+  "bin": {
+    "lfm-tasks": "./dist/cli/lfm-tasks.js"
   },
   "files": [
     "src",

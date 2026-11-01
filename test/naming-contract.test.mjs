@@ -36,6 +36,7 @@ const TIER_3 = [
   ['lfmOgFetcher', 'remarkOgFetcher'],
   ['lfmImageCarousel', null],
   ['lfmHeadingBlocks', null],
+  ['lfmTaskMetadata', null],
 ];
 
 test('every plugin is exported and callable', () => {

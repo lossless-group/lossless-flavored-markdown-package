@@ -25,6 +25,7 @@ import { lfmOgFetcher } from './plugins/lfm-og-fetcher.js';
 import { lfmLinkPreview } from './plugins/lfm-link-preview.js';
 import { lfmImageCarousel } from './plugins/lfm-image-carousel.js';
 import { lfmHeadingBlocks } from './plugins/lfm-heading-blocks.js';
+import { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
 import type { RemarkLfmOptions } from './types/index.js';
 import type { Root } from 'mdast';
 import type { Plugin } from 'unified';
@@ -111,6 +112,16 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // `false`, which is the default.
   if (opts.wikilinks && opts.wikilinks !== (false as any)) {
     processor.use(remarkLfmWikilinks, opts.wikilinks);
+  }
+
+  // Task metadata: opt-in only — most existing checkboxes weren't written to
+  // this convention. Runs after wikilinks so a `#` inside `[[Page #Section]]` is
+  // already part of a link node and can't read as a tag.
+  if (opts.taskMetadata) {
+    processor.use(
+      lfmTaskMetadata,
+      opts.taskMetadata === true ? undefined : opts.taskMetadata,
+    );
   }
 
   // OG fetcher runs before the link-preview annotator so the per-URL

@@ -94,6 +94,14 @@ export type {
   CarouselSort,
 } from './plugins/lfm-image-carousel.js';
 
+/** Task line reader — stamps assignees, tags, estimates and due dates on task
+ *  list items and attaches `tree.data.tasks`. Opt-in. */
+export { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
+
+/** Task aggregator — rolls many documents' tasks into one list, groups them, and
+ *  writes Markdown for GitHub. The `lfm-tasks` script runs it over a git repo. */
+export { aggregateTasks, groupTasks, tasksToMarkdown } from './utils/aggregate-tasks.js';
+
 /** Vault-path → site-route resolver. The declarative half of wikilink
  *  resolution: normalisation, the index cascade (exact → suffix → basename),
  *  relative paths, and template expansion, so sites supply config rather than
@@ -167,6 +175,22 @@ export type {
   LfmHeadingNode,
   /** Plain-text payload on a heading block's `data.headingBlock`. */
   HeadingBlockData,
+  /** Options for the lfmTaskMetadata plugin. */
+  LfmTaskMetadataOptions,
+  /** Payload on a task `listItem`'s `data.task`. */
+  LfmTaskMetadata,
+  /** One entry in `tree.data.tasks`. */
+  LfmTask,
+  /** A parsed document handed to `aggregateTasks`. */
+  LfmTaskDocument,
+  /** A task returned by `aggregateTasks`, with its source. */
+  LfmAggregatedTask,
+  /** What tasks can be grouped on. */
+  LfmTaskGroupBy,
+  /** One group returned by `groupTasks`. */
+  LfmTaskGroup,
+  /** Options for `tasksToMarkdown`. */
+  TasksToMarkdownOptions,
   /** Input passed to a wikilink resolver function. */
   WikilinkResolverInput,
   /** Resolution returned by a wikilink resolver function. */

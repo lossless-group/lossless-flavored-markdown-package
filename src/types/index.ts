@@ -96,8 +96,92 @@ export interface RemarkLfmOptions {
    * `codeFences: { formats: [mermaid, yang] }`.
    */
   codeFences?: RemarkCodeFencesOptions;
+  /**
+   * Read assignees, tags, estimates and due dates out of task list items.
+   * Disabled by default — most existing checkboxes were not written to this
+   * convention. Pass `true`, or an options object to limit who counts as an
+   * assignee.
+   */
+  taskMetadata?: LfmTaskMetadataOptions | boolean;
   /** Build-time Open Graph fetch options. Disabled when omitted. */
   ogFetch?: OGFetchOptions;
+}
+
+/**
+ * Options for the lfmTaskMetadata plugin.
+ */
+export interface LfmTaskMetadataOptions {
+  /**
+   * Handles that count as assignees, compared case-insensitively. Anything else
+   * stays title text, which is how a task starting with `@page` avoids reading
+   * as an assignee. Omit to accept every handle.
+   */
+  collaborators?: string[];
+}
+
+/**
+ * Stamped onto a task `listItem`'s `data.task`. Completion isn't repeated here;
+ * it is already in `listItem.checked`.
+ */
+export interface LfmTaskMetadata {
+  /** Handles without the `@`. */
+  assignees: string[];
+  /** Tags without the `#`. Each contains at least one letter. */
+  tags: string[];
+  /** Estimate without the `~`, as authored, e.g. `3d`. */
+  estimate?: string;
+  /** Due date as `YYYY-MM-DD`. Always a real calendar date. */
+  due?: string;
+}
+
+/** One entry in `tree.data.tasks`, in document order. */
+export interface LfmTask extends LfmTaskMetadata {
+  /** The title with metadata removed and markup stripped. */
+  text: string;
+  /** The title with metadata removed and inline markup kept. */
+  markdown: string;
+  /** Whether the checkbox is ticked. */
+  checked: boolean;
+  /** Text of the nearest preceding heading. */
+  section?: string;
+  /** Source line of the task. */
+  line?: number;
+}
+
+/** A parsed document handed to `aggregateTasks`. */
+export interface LfmTaskDocument {
+  /** Where the document came from, usually its path. */
+  source: string;
+  /** A tree parsed with the `taskMetadata` option on. */
+  tree: unknown;
+}
+
+/** A task returned by `aggregateTasks`. */
+export interface LfmAggregatedTask extends LfmTask {
+  /** The `source` of the document it came from. */
+  source: string;
+}
+
+/** What `groupTasks` and `tasksToMarkdown` can group on. */
+export type LfmTaskGroupBy = 'section' | 'assignee' | 'tag' | 'source';
+
+/** One group returned by `groupTasks`. */
+export interface LfmTaskGroup<T extends LfmTask = LfmTask> {
+  /** The group's name, or `null` for tasks with nothing to group on. */
+  key: string | null;
+  tasks: T[];
+}
+
+/** Options for `tasksToMarkdown`. */
+export interface TasksToMarkdownOptions<T extends LfmTask = LfmTask> {
+  /** The file's `#` heading. */
+  title: string;
+  /** Text placed under the title. */
+  description?: string;
+  /** What each `##` section represents. Default: `assignee` */
+  groupBy?: LfmTaskGroupBy;
+  /** Link shown at the end of each task line, usually to where it was written. */
+  sourceLink?: (task: T) => { label: string; href: string } | undefined;
 }
 
 /**
