@@ -13,8 +13,11 @@ authors:
   - Michael Staton
 augmented_with:
   - Claude Code on Opus 5.5 (1M context)
-at_semantic_version: 0.0.5.0
-status: Implementing
+at_semantic_version: 0.0.5.1
+status: Shipped
+date_first_published: 2026-11-01
+date_work_started: 2026-11-01
+date_work_completed: 2026-11-01
 tags:
   - Spec
   - Task-Management

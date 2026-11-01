@@ -10,8 +10,8 @@
 - [ ] Create a directive preview mode for the development environment ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:895](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L895))
 - [ ] Extend tool-showcase directive to support additional content collection types ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:896](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L896))
 - [ ] Add filtering and sorting capabilities to tool carousel components ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:897](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L897))
-- [ ] Should the plugin also write `hProperties`, so sites can style tasks without reading `tree.data`? ([context-v/specs/Maintain-Project-Task-Management-w-LFM.md:262](context-v/specs/Maintain-Project-Task-Management-w-LFM.md?plain=1#L262))
-- [ ] Should we add a priority token? Tasks has its own, and this spec leaves it out until someone needs it. ([context-v/specs/Maintain-Project-Task-Management-w-LFM.md:263](context-v/specs/Maintain-Project-Task-Management-w-LFM.md?plain=1#L263))
+- [ ] Should the plugin also write `hProperties`, so sites can style tasks without reading `tree.data`? ([context-v/specs/Maintain-Project-Task-Management-w-LFM.md:265](context-v/specs/Maintain-Project-Task-Management-w-LFM.md?plain=1#L265))
+- [ ] Should we add a priority token? Tasks has its own, and this spec leaves it out until someone needs it. ([context-v/specs/Maintain-Project-Task-Management-w-LFM.md:266](context-v/specs/Maintain-Project-Task-Management-w-LFM.md?plain=1#L266))
 
 <details>
 <summary>Completed (11)</summary>
