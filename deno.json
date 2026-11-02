@@ -1,6 +1,6 @@
 {
   "name": "@lossless-group/lfm",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Lossless Flavored Markdown \u2014 a polyglot extended markdown pipeline for remark/rehype",
   "license": "MIT",
   "exports": {
@@ -8,6 +8,7 @@
     "./types": "./src/types/index.ts",
     "./formats": "./src/formats/index.ts",
     "./resolve-path": "./src/utils/resolve-path.ts",
+    "./highlight": "./src/highlight.ts",
     "./formats/yang": "./src/formats/yang.ts",
     "./formats/json-schema": "./src/formats/json-schema.ts",
     "./formats/plantuml": "./src/formats/plantuml.ts"
@@ -26,7 +27,8 @@
     "remark-parse": "npm:remark-parse@^11.0.0",
     "remark-gfm": "npm:remark-gfm@^4.0.0",
     "remark-directive": "npm:remark-directive@^3.0.0",
-    "mdast": "npm:@types/mdast@^4.0.0"
+    "mdast": "npm:@types/mdast@^4.0.0",
+    "shiki": "npm:shiki@~4.5.0"
   },
   "nodeModulesDir": "auto",
   "unstable": [

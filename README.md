@@ -702,6 +702,47 @@ export const abc: FenceFormat<AbcTune> = {
 
 Throwing from `parse` is safe — the message lands on `data.fence.error` and the renderer falls back to source.
 
+## Syntax highlighting
+
+`@lossless-group/lfm/highlight` colors code with [Shiki](https://shiki.style/). It's a separate import, so the parser doesn't load Shiki unless you use it.
+
+```astro
+---
+import { highlightCode } from '@lossless-group/lfm/highlight';
+
+const html = await highlightCode(code, language);
+---
+<pre><code set:html={html} /></pre>
+```
+
+Text is always escaped, and a missing or unknown language returns it uncolored.
+
+**Every site gets a default palette.** It uses fixed hues, with lightness taken from the site's `--color-text`, so it follows light, dark, and vibrant modes with no setup. It stayed above 5:1 contrast in all three modes of the six splashes it was measured on.
+
+**To match a site's brand, set any of these in its theme CSS**, per mode if needed:
+
+```css
+:root {
+  --lfm-code-token-keyword: var(--color-accent);
+  --lfm-code-token-string: #2f9e6e;
+}
+```
+
+| Variable | Colors |
+|---|---|
+| `--lfm-code-foreground` | Default text |
+| `--lfm-code-token-keyword` | `const`, `return`, and YAML or JSON keys |
+| `--lfm-code-token-string` | Strings |
+| `--lfm-code-token-string-expression` | Interpolated strings |
+| `--lfm-code-token-function` | Functions and types |
+| `--lfm-code-token-constant` | Numbers, booleans, and constants |
+| `--lfm-code-token-parameter` | Parameters |
+| `--lfm-code-token-comment` | Comments |
+| `--lfm-code-token-punctuation` | Punctuation |
+| `--lfm-code-token-link` | Links in comments and docs |
+
+A site that overrides a color owns its contrast, so check it in each mode.
+
 ## OG fetching (build-time)
 
 `lfmOgFetcher` walks the tree, finds external links and link-preview directives, fetches their OpenGraph metadata via a configurable backend, and annotates the AST with `LinkPreviewData`. Runs at parse time so renderers have everything they need with no client-side round-trip — popovers and previews appear instantly on hover.
