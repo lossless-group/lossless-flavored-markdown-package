@@ -2,7 +2,7 @@
 /**
  * measure-vault.mjs — reproduce every number quoted for path resolution.
  *
- * The measurement tables in README.md and in
+ * The measurement tables in docs-v/wikilinks.md and in
  * `context-v/specs/Maintain-Path-Resolution-for-Wikilinks.md` decided the defaults in
  * `src/utils/resolve-path.ts`: whether there is an index at all, whether
  * `basename` is in the cascade, whether ambiguity refuses to guess, whether
@@ -11,7 +11,7 @@
  * Those numbers were originally produced by throwaway scripts that were never
  * committed. Stating them as fact in a published package's documentation while
  * nobody could re-run them is an overclaim, and this file is the fix. Every row
- * printed here is a row in the README.
+ * printed here is a row in docs-v/wikilinks.md.
  *
  *   node scripts/measure-vault.mjs [vaultDir]      # default: ../content
  *   node scripts/measure-vault.mjs --json          # machine-readable
@@ -130,7 +130,7 @@ const exactAmongPathed = (() => {
 })();
 
 // ------------------------------- the documented four-route config, end to end
-// README quotes a resolve-rate for the exact routes shown in its example. That
+// docs-v/wikilinks.md quotes a resolve-rate for the exact routes shown in its example. That
 // claim is only checkable if the config is here too.
 const DOC_ROUTES = [
   {
@@ -212,7 +212,7 @@ if (asJson) {
     `\nfs walk ${data.ms.walk}ms · index build ${data.ms.index}ms · resolve all ${data.links} links ${data.ms.resolveAll}ms → ${data.usPerLink}µs per link`,
   );
   console.log(
-    `\nREADME's four-route example, no catch-all: ${data.docConfig.resolved} of ${data.links} resolve (${data.docConfig.resolvedPct}%)` +
+    `\ndocs-v/wikilinks.md's four-route example, no catch-all: ${data.docConfig.resolved} of ${data.links} resolve (${data.docConfig.resolvedPct}%)` +
       `\n  by tier: ${JSON.stringify(data.docConfig.tiers)}` +
       `\n  refused: ${JSON.stringify(data.docConfig.reasons)}\n`,
   );
