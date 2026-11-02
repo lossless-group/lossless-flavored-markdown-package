@@ -53,11 +53,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      # --ignore-workspace so the install resolves identically here and on a
-      # developer machine, where this repo sits inside the lossless-monorepo
-      # pnpm workspace and would otherwise pull in sibling projects.
       - name: Install
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck
         run: pnpm exec tsc --noEmit -p tsconfig.json
@@ -90,7 +87,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        run: pnpm install --frozen-lockfile
 
       # Catches two things that are invisible until you actually publish, and
       # that we have already been bitten by once each: a slow-types error in
