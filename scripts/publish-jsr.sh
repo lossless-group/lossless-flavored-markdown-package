@@ -17,7 +17,21 @@
 #     pnpm lfm:jsr                      # interactive, browser auth
 #     pnpm lfm:jsr -- --token "$JSR_TOKEN"
 #
+# JSR shows only the README, so the published one carries the docs-v guides.
+# build-jsr-readme.mjs swaps it in for the publish, and the trap restores the
+# short one. That needs --allow-dirty, so the clean-tree check moves here.
+#
 set -euo pipefail
+
+if [[ " $* " != *" --allow-dirty "* ]] && [[ -n "$(git status --porcelain)" ]]; then
+  echo "publish-jsr: uncommitted changes. Commit them, or pass --allow-dirty." >&2
+  exit 1
+fi
+
+README_BACKUP="$(mktemp)"
+cp README.md "$README_BACKUP"
+trap 'cp "$README_BACKUP" README.md; rm -f "$README_BACKUP"' EXIT
+node scripts/build-jsr-readme.mjs README.md
 
 FLAGS=(
   publish
@@ -25,14 +39,15 @@ FLAGS=(
   --unstable-sloppy-imports
   --unstable-byonm
   --no-check
+  --allow-dirty
 )
 
 if command -v deno >/dev/null 2>&1; then
-  exec deno "${FLAGS[@]}" "$@"
+  deno "${FLAGS[@]}" "$@"
 elif command -v nix >/dev/null 2>&1; then
   # NixOS without deno installed globally — fetch it from nixpkgs on demand.
-  exec nix run nixpkgs#deno -- "${FLAGS[@]}" "$@"
+  nix run nixpkgs#deno -- "${FLAGS[@]}" "$@"
 else
   # Non-Nix machine: the npm CLI's bundled binary is fine there.
-  exec pnpx jsr publish "$@"
+  pnpx jsr publish --allow-dirty "$@"
 fi

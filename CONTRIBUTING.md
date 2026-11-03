@@ -16,6 +16,7 @@ A few of the files guard things that would otherwise fail silently somewhere els
 | `naming-contract` | Every deprecated export alias still resolves. Drop one and it breaks in a consuming repo weeks later, not here. |
 | `export-parity` | `package.json` and `deno.json` declare the same subpaths. They drifted once, and the entire fence registry was unimportable from JSR for two releases. |
 | `heading-ids` | The slugifier's *quirks* — extension stripping, `--` collapse, underscore survival. Published anchors depend on them. |
+| `jsr-readme` | The README that JSR shows carries every guide in `docs-v/index.md`, and its in-page links all land on a heading. |
 | `demo-fixtures` | The splash's demo examples still demonstrate what they claim, parsed from the real markdown files on disk. |
 
 ## Plugin names
