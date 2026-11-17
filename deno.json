@@ -1,6 +1,6 @@
 {
   "name": "@lossless-group/lfm",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Lossless Flavored Markdown \u2014 a polyglot extended markdown pipeline for remark/rehype",
   "license": "MIT",
   "exports": {
@@ -27,6 +27,7 @@
     "remark-parse": "npm:remark-parse@^11.0.0",
     "remark-gfm": "npm:remark-gfm@^4.0.0",
     "remark-directive": "npm:remark-directive@^3.0.0",
+    "remark-mdx": "npm:remark-mdx@^3.1.1",
     "mdast": "npm:@types/mdast@^4.0.0",
     "shiki": "npm:shiki@~4.5.0"
   },

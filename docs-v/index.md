@@ -11,6 +11,7 @@ okf_version: "0.2"
 * [Headings](headings.md) - Heading blocks and the table-of-contents outline
 * [Image carousels](images.md) - The carousel directive and payload
 * [Link previews](link-previews.md) - OpenGraph fetching and bare-URL embeds
+* [MDX](mdx.md) - Components in `.mdx` files, resolved from the file's own imports
 * [Roadmap](roadmap.md) - What's planned
 * [Syntax highlighting](highlighting.md) - Shiki, the default palette, and per-site overrides
 * [Tasks](tasks.md) - Task metadata and the `lfm-tasks` script

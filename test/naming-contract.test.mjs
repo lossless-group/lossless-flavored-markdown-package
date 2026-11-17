@@ -28,6 +28,7 @@ const TIER_2 = [
   ['remarkLfmCodeFences', 'remarkCodeFences'],
   ['remarkLfmHeadingIds', 'remarkHeadingIds'],
   ['remarkLfmWikilinks', 'remarkLosslessWikilinks'],
+  ['remarkLfmMdx', null],
 ];
 
 /** Tier 3 — our syntax, our handling, no formal prior art. */

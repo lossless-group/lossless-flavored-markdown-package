@@ -64,6 +64,7 @@ Every plugin is also exported on its own, for example `remarkLfmCallouts`.
 | Colored code | Any code fence | Import `/highlight` in your code block component | [Highlighting](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/highlighting.md) |
 | Wikilinks | `[[Page]]` or `[[folder/Page#Section\|Display]]` | Supply a resolver or path config | [Wikilinks](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/wikilinks.md) |
 | Task metadata | `- [ ] @handle Title #Tag ~3d 2026-11-15` | Set `taskMetadata` | [Tasks](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/tasks.md) |
+| Components in `.mdx` files | `import X from './X.astro'` and `<X prop={[…]} />` | Set `mdx` for `.mdx` files | [MDX](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/mdx.md) |
 
 A bare URL on its own line can also become an embed. The provider catalog ships now, but sites classify the URLs themselves until the plugin lands. See [Link previews](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/link-previews.md).
 

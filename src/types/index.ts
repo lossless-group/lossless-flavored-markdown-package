@@ -29,11 +29,57 @@ export interface LfmComponentNode {
   /** Key-value attributes parsed from the trigger syntax. */
   attributes: Record<string, string>;
   /** Which syntax was used to trigger this component in the source markdown. */
-  triggerSyntax: 'directive' | 'markdoc' | 'mdx-lite' | 'code-fence' | 'obsidian-callout' | 'auto-unfurl';
+  triggerSyntax: 'directive' | 'markdoc' | 'mdx-lite' | 'mdx' | 'code-fence' | 'obsidian-callout' | 'auto-unfurl';
   /** Raw inner content before child parsing, if applicable. */
   rawContent?: string;
   /** Parsed child nodes. */
   children?: unknown[];
+  /**
+   * Props with their real types (arrays, objects, numbers), statically
+   * evaluated. Set by the `mdx` trigger; `attributes` keeps the string ones.
+   */
+  props?: Record<string, unknown>;
+  /**
+   * `mdx` trigger: where the component comes from, read from the file's own
+   * `import`. The renderer imports this instead of looking the name up.
+   */
+  import?: LfmMdxImport;
+  /** `mdx` trigger: the element sat inside a paragraph. */
+  inline?: boolean;
+  /** `mdx` trigger: a lowercase (HTML) element such as `<div>`, with no import. */
+  intrinsic?: boolean;
+  /** `mdx` trigger: props that need code to evaluate, left out of `props`. */
+  dynamicProps?: string[];
+}
+
+/**
+ * One binding from an MDX file's `import` statements.
+ * `import BarChart from '../../components/BarChart.astro'` gives
+ * `{ local: 'BarChart', source: '../../components/BarChart.astro', name: 'default' }`.
+ */
+export interface LfmMdxImport {
+  /** The name used in the file, e.g. `BarChart`. */
+  local: string;
+  /** The module specifier as written. */
+  source: string;
+  /** The export imported: `'default'`, `'*'` for a namespace, or the named export. */
+  name: string;
+  /**
+   * `source` joined against the file's path, when `source` is relative and
+   * `filePath` was given: `src/content/blog/a.mdx` + `../../components/X.astro`
+   * gives `src/components/X.astro`.
+   */
+  resolved?: string;
+}
+
+/** Options for the `mdx` trigger (`remarkLfmMdx`). */
+export interface RemarkLfmMdxOptions {
+  /**
+   * Path of the file being parsed, used to resolve relative imports, e.g.
+   * Astro's `entry.filePath` (`src/content/blog/a.mdx`). Defaults to the
+   * vfile's path, if any.
+   */
+  filePath?: string;
 }
 
 /**
@@ -105,6 +151,15 @@ export interface RemarkLfmOptions {
   taskMetadata?: LfmTaskMetadataOptions | boolean;
   /** Build-time Open Graph fetch options. Disabled when omitted. */
   ogFetch?: OGFetchOptions;
+  /**
+   * Parse MDX: JSX elements become `componentNode`s with `triggerSyntax: 'mdx'`
+   * whose `import` names the component the file imports, so the renderer needs
+   * no trigger map for them. Nothing is executed; props are evaluated
+   * statically. Disabled by default, because MDX changes how `<` and `{` parse:
+   * turn it on for `.mdx` files only. Pass `{ filePath }` to resolve relative
+   * imports.
+   */
+  mdx?: RemarkLfmMdxOptions | boolean;
 }
 
 /**

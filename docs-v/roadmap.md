@@ -30,7 +30,7 @@ For what has already shipped, see the [changelog](../changelog/).
 ## Broader polyglot reach
 
 - **Markdoc `{% tag %}` normalization**: converge Markdoc-flavored content into the same AST.
-- **MDX-lite `<Component />` normalization**: accept MDX-shaped author syntax without JSX execution.
+- ~~**MDX-lite `<Component />` normalization**~~: shipped in 0.8.0 as the `mdx` trigger. See [MDX](mdx.md).
 
 The first kind adds triggers. The second changes which authoring conventions converge on the canonical AST.
 

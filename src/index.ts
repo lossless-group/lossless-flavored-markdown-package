@@ -98,6 +98,9 @@ export type {
  *  list items and attaches `tree.data.tasks`. Opt-in. */
 export { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
 
+// MDX as a trigger syntax: JSX elements resolve to the component the file imports
+export { remarkLfmMdx } from './plugins/remark-lfm-mdx.js';
+
 /** Task aggregator — rolls many documents' tasks into one list, groups them, and
  *  writes Markdown for GitHub. The `lfm-tasks` script runs it over a git repo. */
 export { aggregateTasks, groupTasks, tasksToMarkdown } from './utils/aggregate-tasks.js';
@@ -161,6 +164,10 @@ export type {
   LfmCalloutNode,
   /** Options for the remarkLfm preset. */
   RemarkLfmOptions,
+  /** One binding from an MDX file's imports, with its resolved path. */
+  LfmMdxImport,
+  /** Options for the MDX trigger. */
+  RemarkLfmMdxOptions,
   /** Options for the remarkHeadingIds plugin. */
   RemarkHeadingIdsOptions,
   /** Options for the remarkCodeFences plugin. */

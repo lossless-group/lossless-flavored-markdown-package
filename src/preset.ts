@@ -26,6 +26,7 @@ import { lfmLinkPreview } from './plugins/lfm-link-preview.js';
 import { lfmImageCarousel } from './plugins/lfm-image-carousel.js';
 import { lfmHeadingBlocks } from './plugins/lfm-heading-blocks.js';
 import { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
+import { remarkLfmMdx } from './plugins/remark-lfm-mdx.js';
 import type { RemarkLfmOptions } from './types/index.js';
 import type { Root } from 'mdast';
 import type { Plugin } from 'unified';
@@ -65,6 +66,13 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
 
   if (opts.directives) {
     processor.use(remarkDirective as Plugin);
+  }
+
+  // MDX: opt-in, for .mdx files only, since it changes how `<` and `{` parse.
+  // Runs before every transform so the rest of the pipeline sees componentNodes
+  // and plain text, never raw JSX or ESM.
+  if (opts.mdx) {
+    processor.use(remarkLfmMdx, opts.mdx === true ? undefined : opts.mdx);
   }
 
   if (opts.callouts) {
