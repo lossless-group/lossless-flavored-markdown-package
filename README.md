@@ -2,7 +2,7 @@
 
 **Lossless Flavored Markdown** — MDX power without MDX's opinions.
 
-LFM turns many markdown authoring conventions (CommonMark, GFM, directives, Obsidian callouts, hex-code citations) into one AST for your framework's components to render. If you want JSX in markdown, use MDX. If you want CommonMark only, use `remark-parse`. LFM sits between them.
+LFM turns many markdown authoring conventions (CommonMark, GFM, directives, Obsidian callouts, hex-code citations, MDX components) into one AST for your framework's components to render. It reads `.mdx` files too: their JSX components arrive as nodes naming the component file they import, and nothing in the file is executed. If you want CommonMark only, use `remark-parse`.
 
 [Live demo](https://lossless-group.github.io/lossless-flavored-markdown-package/demo/) · [Site](https://lossless-group.github.io/lossless-flavored-markdown-package/) · [Changelog](https://lossless-group.github.io/lossless-flavored-markdown-package/changelog/) · [Docs](https://github.com/lossless-group/lossless-flavored-markdown-package/tree/master/docs-v)
 
@@ -14,7 +14,7 @@ Install from [JSR](https://jsr.io/@lossless-group/lfm) with an npm alias:
 // package.json
 {
   "dependencies": {
-    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.7.0"
+    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.8.0"
   }
 }
 ```
@@ -24,7 +24,7 @@ Install from [JSR](https://jsr.io/@lossless-group/lfm) with an npm alias:
 @jsr:registry=https://npm.jsr.io
 ```
 
-Newer pnpm versions can use `"@lossless-group/lfm": "jsr:^0.7.0"` instead, with no `.npmrc` line. [GitHub Packages](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm) also carries a mirror, but it needs an auth token.
+Newer pnpm versions can use `"@lossless-group/lfm": "jsr:^0.8.0"` instead, with no `.npmrc` line. [GitHub Packages](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm) also carries a mirror, but it needs an auth token.
 
 ## Quick start
 
@@ -79,30 +79,66 @@ flowchart LR
         S2["&gt; [!warning] Title"]
         S3["bare youtu.be/{id}"]
         S4["[^a1b2c3]"]
+        S5["&lt;BarChart items={[…]} /&gt; in .mdx"]
     end
 
     subgraph TRG["02 · Trigger — LFM ships"]
         T1["remark-lfm-callouts"]
         T2["lfm-link-preview"]
         T3["remark-lfm-citations"]
+        T4["remark-lfm-mdx"]
     end
 
     subgraph CMP["03 · Component — your renderer"]
         C1["one MDAST callout node"]
         C2["one MDAST link-preview node"]
         C3["one MDAST citation node"]
+        C4["one component node + its import"]
     end
 
     S1 --> T1
     S2 --> T1
     S3 --> T2
     S4 --> T3
+    S5 --> T4
     T1 --> C1
     T2 --> C2
     T3 --> C3
+    T4 --> C4
 ```
 
 A directive callout and an Obsidian callout produce the same node, so your `<Callout>` renders one shape whichever tool wrote the file. Supporting a new syntax means adding a plugin, with no renderer changes. This package owns the first two stages, and the components are yours.
+
+### MDX is one more trigger
+
+An MDX component is LFM's equivalent of a directive. Both put a component, with
+its props, at a place in the prose:
+
+<table>
+<tr><th>Directive (<code>.md</code>)</th><th>MDX (<code>.mdx</code>)</th></tr>
+<tr><td>
+
+```md
+::stat{value="5×" label="vs. peers"}
+```
+
+</td><td>
+
+```mdx
+import Stat from '../components/Stat.astro';
+
+<Stat value="5×" label="vs. peers" />
+```
+
+</td></tr>
+<tr><td>A <code>leafDirective</code> named <code>stat</code>. Your renderer finds the component by name in its own trigger map.</td><td>A <code>componentNode</code> with <code>triggerSyntax: 'mdx'</code>, its props, and <code>import.resolved: 'src/components/Stat.astro'</code> (for a file in <code>src/content/</code>). Your renderer renders that file; no lookup.</td></tr>
+</table>
+
+The difference is who says which component: a directive names it and the site
+decides; an MDX file imports it itself. Props keep their real types, so
+`items={[{ value: 18000 }]}` arrives as an array. They are read as data, never
+executed. Turn `mdx` on for `.mdx` files only, since MDX changes how `<` and `{`
+parse. See [MDX](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/mdx.md).
 
 ## Options
 
@@ -120,6 +156,7 @@ const tree = await parseMarkdown(content, {
   // wikilinks: { resolver },
   // taskMetadata: true,
   // ogFetch: { enabled: true },     // makes network calls
+  // mdx: { filePath },              // .mdx files only; resolves component imports
 });
 ```
 
