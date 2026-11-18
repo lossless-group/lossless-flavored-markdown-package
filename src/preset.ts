@@ -28,6 +28,9 @@ import { lfmHeadingBlocks } from './plugins/lfm-heading-blocks.js';
 import { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
 import { remarkLfmMdx } from './plugins/remark-lfm-mdx.js';
 import { lfmWordColons } from './plugins/lfm-word-colons.js';
+import { lfmCrossReferenceEmbeds } from './plugins/lfm-cross-reference-embeds.js';
+import remarkParse from 'remark-parse';
+import { unified } from 'unified';
 import type { RemarkLfmOptions } from './types/index.js';
 import type { Root } from 'mdast';
 import type { Plugin } from 'unified';
@@ -76,6 +79,31 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // and plain text, never raw JSX or ESM.
   if (opts.mdx) {
     processor.use(remarkLfmMdx, opts.mdx === true ? undefined : opts.mdx);
+  }
+
+  // Embeds: opt-in, since a site has to say how to load another document.
+  // Runs before callouts, citations, heading ids and wikilinks, so embedded
+  // nodes go through the host's pipeline like its own. Each embedded document
+  // is parsed with these same options, one level deeper, minus the features
+  // that belong to the host: ids, eyebrows and citations are computed once,
+  // for the whole page.
+  if (opts.crossReferenceEmbeds) {
+    const depth = (opts.crossReferenceEmbeds as { depth?: number }).depth ?? 0;
+    processor.use(lfmCrossReferenceEmbeds, {
+      ...opts.crossReferenceEmbeds,
+      depth,
+      parseEmbedded: async (markdown: string, nextDepth: number) => {
+        const inner = unified().use(remarkParse).use(remarkLfm, {
+          ...options,
+          mdx: false,
+          citations: false,
+          headingIds: false,
+          headingBlocks: false,
+          crossReferenceEmbeds: { ...(opts.crossReferenceEmbeds as object), depth: nextDepth } as any,
+        });
+        return (await inner.run(inner.parse(markdown))) as Root;
+      },
+    } as any);
   }
 
   if (opts.callouts) {

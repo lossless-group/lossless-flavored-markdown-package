@@ -101,6 +101,9 @@ export { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
 // MDX as a trigger syntax: JSX elements resolve to the component the file imports
 export { remarkLfmMdx } from './plugins/remark-lfm-mdx.js';
 
+// Obsidian section embeds: ![[Note#Heading]] shows that section here
+export { lfmCrossReferenceEmbeds, parseCrossReferenceEmbedTarget } from './plugins/lfm-cross-reference-embeds.js';
+
 /** Task aggregator — rolls many documents' tasks into one list, groups them, and
  *  writes Markdown for GitHub. The `lfm-tasks` script runs it over a git repo. */
 export { aggregateTasks, groupTasks, tasksToMarkdown } from './utils/aggregate-tasks.js';
@@ -168,6 +171,14 @@ export type {
   LfmMdxImport,
   /** Options for the MDX trigger. */
   RemarkLfmMdxOptions,
+  /** Options for Obsidian section embeds. */
+  LfmCrossReferenceEmbedOptions,
+  /** What an embed's `load` receives. */
+  LfmCrossReferenceEmbedInput,
+  /** A loaded document for an embed. */
+  LfmCrossReferenceEmbedSource,
+  /** `data.crossReferenceEmbed` on an embed node. */
+  LfmCrossReferenceEmbedData,
   /** Options for the remarkHeadingIds plugin. */
   RemarkHeadingIdsOptions,
   /** Options for the remarkCodeFences plugin. */

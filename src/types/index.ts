@@ -160,6 +160,66 @@ export interface RemarkLfmOptions {
    * imports.
    */
   mdx?: RemarkLfmMdxOptions | boolean;
+  /**
+   * Obsidian section embeds: `![[Note#Heading]]` on its own line shows that
+   * section of another document here, as a `containerDirective` named `cross-reference-embed`.
+   * Disabled by default: LFM never reads files itself, so you supply `load`,
+   * which returns the markdown of the document a `![[…]]` names.
+   */
+  crossReferenceEmbeds?: LfmCrossReferenceEmbedOptions | false;
+}
+
+/** What `load` and `url` receive for each `![[…]]`. */
+export interface LfmCrossReferenceEmbedInput {
+  /** The document part, as written: `Tooling/Products/Google Maps`. */
+  path: string;
+  /** The section, `A › B` for `#A#B`, or `null` for the whole document. */
+  section: string | null;
+  /** Each `#` part in order. */
+  sections: string[];
+  /** The label after `|`, or `null`. */
+  display: string | null;
+  /** The raw `![[…]]`. */
+  raw: string;
+}
+
+/** A loaded document. A bare string is shorthand for `{ markdown }`. */
+export interface LfmCrossReferenceEmbedSource {
+  /** The document's markdown, frontmatter and all. */
+  markdown: string;
+  /** Where the original lives, for the "open the original" link. */
+  url?: string;
+  /** Its title, for the "from …" line. Defaults to frontmatter `title`, then the file name. */
+  title?: string;
+}
+
+/** Options for the `crossReferenceEmbeds` feature (`lfmCrossReferenceEmbeds`). */
+export interface LfmCrossReferenceEmbedOptions {
+  /**
+   * Return the markdown of the document a `![[…]]` names, or `null` when there
+   * isn't one. May be async. Use the same index your wikilink resolver uses.
+   */
+  load: (input: LfmCrossReferenceEmbedInput) => LfmCrossReferenceEmbedSource | string | null | undefined | Promise<LfmCrossReferenceEmbedSource | string | null | undefined>;
+  /** The link to the original when `load` doesn't return one. */
+  url?: (input: LfmCrossReferenceEmbedInput) => string | null | undefined;
+  /** How many embeds deep to follow (embeds inside embedded documents). Default 2. */
+  maxDepth?: number;
+  /** Called for each embed that couldn't be filled, with the reason. */
+  onUnresolved?: (input: LfmCrossReferenceEmbedInput & { status: LfmCrossReferenceEmbedData['status'] }) => void;
+}
+
+/** Stamped on the embed node as `data.crossReferenceEmbed`. */
+export interface LfmCrossReferenceEmbedData {
+  path: string;
+  section: string | null;
+  display: string | null;
+  /** For the "from …" line. */
+  title: string;
+  /** Opens the original, when known. */
+  url?: string;
+  /** `ok`, or why the block is empty. */
+  status: 'ok' | 'missing-document' | 'missing-section' | 'too-deep';
+  raw: string;
 }
 
 /**

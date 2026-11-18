@@ -38,6 +38,7 @@ const TIER_3 = [
   ['lfmImageCarousel', null],
   ['lfmHeadingBlocks', null],
   ['lfmTaskMetadata', null],
+  ['lfmCrossReferenceEmbeds', null],
 ];
 
 test('every plugin is exported and callable', () => {

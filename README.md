@@ -2,7 +2,7 @@
 
 **Lossless Flavored Markdown** — MDX power without MDX's opinions.
 
-LFM turns many markdown authoring conventions (CommonMark, GFM, directives, Obsidian callouts, hex-code citations, MDX components) into one AST for your framework's components to render. It reads `.mdx` files too: their JSX components arrive as nodes naming the component file they import, and nothing in the file is executed. If you want CommonMark only, use `remark-parse`.
+LFM turns many markdown authoring conventions (CommonMark, GFM, directives, Obsidian callouts, hex-code citations, Obsidian embeds, MDX components) into one AST for your framework's components to render. It reads `.mdx` files too: their JSX components arrive as nodes naming the component file they import, and nothing in the file is executed. If you want CommonMark only, use `remark-parse`.
 
 [Live demo](https://lossless-group.github.io/lossless-flavored-markdown-package/demo/) · [Site](https://lossless-group.github.io/lossless-flavored-markdown-package/) · [Changelog](https://lossless-group.github.io/lossless-flavored-markdown-package/changelog/) · [Docs](https://github.com/lossless-group/lossless-flavored-markdown-package/tree/master/docs-v)
 
@@ -14,7 +14,7 @@ Install from [JSR](https://jsr.io/@lossless-group/lfm) with an npm alias:
 // package.json
 {
   "dependencies": {
-    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.8.0"
+    "@lossless-group/lfm": "npm:@jsr/lossless-group__lfm@^0.9.0"
   }
 }
 ```
@@ -24,7 +24,7 @@ Install from [JSR](https://jsr.io/@lossless-group/lfm) with an npm alias:
 @jsr:registry=https://npm.jsr.io
 ```
 
-Newer pnpm versions can use `"@lossless-group/lfm": "jsr:^0.8.0"` instead, with no `.npmrc` line. [GitHub Packages](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm) also carries a mirror, but it needs an auth token.
+Newer pnpm versions can use `"@lossless-group/lfm": "jsr:^0.9.0"` instead, with no `.npmrc` line. [GitHub Packages](https://github.com/lossless-group/lossless-flavored-markdown-package/pkgs/npm/lfm) also carries a mirror, but it needs an auth token.
 
 ## Quick start
 
@@ -64,6 +64,7 @@ Every plugin is also exported on its own, for example `remarkLfmCallouts`.
 | Colored code | Any code fence | Import `/highlight` in your code block component | [Highlighting](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/highlighting.md) |
 | Wikilinks | `[[Page]]` or `[[folder/Page#Section\|Display]]` | Supply a resolver or path config | [Wikilinks](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/wikilinks.md) |
 | Task metadata | `- [ ] @handle Title #Tag ~3d 2026-11-15` | Set `taskMetadata` | [Tasks](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/tasks.md) |
+| A section of another document, shown here | `![[Note#Heading]]` on its own line | Set `crossReferenceEmbeds` with a `load` function | [Cross-reference embeds](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/cross-reference-embeds.md) |
 | Components in `.mdx` files | `import X from './X.astro'` and `<X prop={[…]} />` | Set `mdx` for `.mdx` files | [MDX](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/mdx.md) |
 
 A bare URL on its own line can also become an embed. The provider catalog ships now, but sites classify the URLs themselves until the plugin lands. See [Link previews](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/link-previews.md).
@@ -80,6 +81,7 @@ flowchart LR
         S3["bare youtu.be/{id}"]
         S4["[^a1b2c3]"]
         S5["&lt;BarChart items={[…]} /&gt; in .mdx"]
+        S6["![[Note#Heading]]"]
     end
 
     subgraph TRG["02 · Trigger — LFM ships"]
@@ -87,6 +89,7 @@ flowchart LR
         T2["lfm-link-preview"]
         T3["remark-lfm-citations"]
         T4["remark-lfm-mdx"]
+        T5["lfm-cross-reference-embeds"]
     end
 
     subgraph CMP["03 · Component — your renderer"]
@@ -94,6 +97,7 @@ flowchart LR
         C2["one MDAST link-preview node"]
         C3["one MDAST citation node"]
         C4["one component node + its import"]
+        C5["one cross-reference-embed block + its source"]
     end
 
     S1 --> T1
@@ -101,10 +105,12 @@ flowchart LR
     S3 --> T2
     S4 --> T3
     S5 --> T4
+    S6 --> T5
     T1 --> C1
     T2 --> C2
     T3 --> C3
     T4 --> C4
+    T5 --> C5
 ```
 
 A directive callout and an Obsidian callout produce the same node, so your `<Callout>` renders one shape whichever tool wrote the file. Supporting a new syntax means adding a plugin, with no renderer changes. This package owns the first two stages, and the components are yours.
@@ -140,6 +146,39 @@ decides; an MDX file imports it itself. Props keep their real types, so
 executed. Turn `mdx` on for `.mdx` files only, since MDX changes how `<` and `{`
 parse. See [MDX](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/mdx.md).
 
+### Show a section of another document
+
+Obsidian's embed syntax works too. On a line of its own:
+
+```md
+![[Google Maps#Google Maps API managing policies.]]
+![[Tooling/Products/Google Maps#Google Maps API managing policies.|Google Maps]]
+```
+
+LFM loads the other document through a `load` function you supply (it never
+reads files itself), cuts out that section (its heading, up to the next heading
+at the same level), and puts it in place as one `cross-reference-embed` block.
+The block carries where it came from (`title`, `url`), so your renderer can show
+it as part of the page, with a small "From *Google Maps*" line and a link that
+opens the original:
+
+```ts
+const tree = await parseMarkdown(body, {
+  crossReferenceEmbeds: {
+    load: async ({ path }) => {
+      const note = await findNote(path);
+      return note ? { markdown: note.body, url: note.url } : null;
+    },
+  },
+});
+```
+
+`![[Note]]` embeds a whole document, `#A#B` a section inside a section, and a
+missing document or section still arrives, empty, with a `status` saying why.
+Astro sites can copy the `CrossReferenceContentEmbed` component from
+astro-knots' `packages/lfm-astro`. See
+[Cross-reference embeds](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/cross-reference-embeds.md).
+
 ## Options
 
 ```ts
@@ -157,6 +196,7 @@ const tree = await parseMarkdown(content, {
   // taskMetadata: true,
   // ogFetch: { enabled: true },     // makes network calls
   // mdx: { filePath },              // .mdx files only; resolves component imports
+  // crossReferenceEmbeds: { load },  // ![[Note#Heading]]; makes parsing async
 });
 ```
 

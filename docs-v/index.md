@@ -8,6 +8,7 @@ okf_version: "0.2"
 
 * [Citations](citations.md) - Hex-code footnotes and the citation dataset
 * [Code-fence formats](code-fences.md) - Mermaid, Graphviz, PlantUML, Vega-Lite, YANG, JSON Schema, JSON Canvas
+* [Cross-reference embeds](cross-reference-embeds.md) - Obsidian's `![[Note#Heading]]`: a section of another document, shown here
 * [Headings](headings.md) - Heading blocks and the table-of-contents outline
 * [Image carousels](images.md) - The carousel directive and payload
 * [Link previews](link-previews.md) - OpenGraph fetching and bare-URL embeds
