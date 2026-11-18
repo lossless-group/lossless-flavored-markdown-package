@@ -1,4 +1,4 @@
-name: Deploy splash to GitHub Pages
+name: Deploy splash and user docs to GitHub Pages
 
 on:
   push:
@@ -39,7 +39,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: splash/pnpm-lock.yaml
+          cache-dependency-path: |
+            splash/pnpm-lock.yaml
+            user-docs/pnpm-lock.yaml
 
       # The splash imports the package's *source* (../../../src/index.ts), so
       # bare imports inside src/ resolve from the repo root's node_modules, not
@@ -60,6 +62,20 @@ jobs:
           # lives as a repo Variable, not a Secret. Set in repo settings →
           # Secrets and variables → Actions → Variables.
           OPENPANEL_CLIENT_ID: ${{ vars.OPENPANEL_CLIENT_ID }}
+
+      # The user docs are a separate Starlight site built from ../docs-v. It
+      # has its own Pagefind index, so it builds on its own and is published
+      # inside splash's output at /docs/.
+      - name: Install user docs
+        working-directory: user-docs
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Build user docs
+        working-directory: user-docs
+        run: pnpm build
+
+      - name: Publish user docs under /docs/
+        run: rm -rf dist/docs && cp -R ../user-docs/dist dist/docs
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

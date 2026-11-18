@@ -4,7 +4,7 @@
 
 LFM turns many markdown authoring conventions (CommonMark, GFM, directives, Obsidian callouts, hex-code citations, Obsidian embeds, MDX components) into one AST for your framework's components to render. It reads `.mdx` files too: their JSX components arrive as nodes naming the component file they import, and nothing in the file is executed. If you want CommonMark only, use `remark-parse`.
 
-[Live demo](https://lossless-group.github.io/lossless-flavored-markdown-package/demo/) · [Site](https://lossless-group.github.io/lossless-flavored-markdown-package/) · [Changelog](https://lossless-group.github.io/lossless-flavored-markdown-package/changelog/) · [Docs](https://github.com/lossless-group/lossless-flavored-markdown-package/tree/master/docs-v)
+[Live demo](https://lossless-group.github.io/lossless-flavored-markdown-package/demo/) · [Site](https://lossless-group.github.io/lossless-flavored-markdown-package/) · [Changelog](https://lossless-group.github.io/lossless-flavored-markdown-package/changelog/) · [Docs](https://lossless-group.github.io/lossless-flavored-markdown-package/docs/)
 
 ## Install
 

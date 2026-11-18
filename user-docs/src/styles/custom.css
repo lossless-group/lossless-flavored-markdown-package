@@ -1,0 +1,16 @@
+/* LFM's violet, from ../../splash/src/styles/theme.css (--color__violet-*). */
+:root {
+  --sl-color-accent-low: #1d1450;
+  --sl-color-accent: #5b3fd9;
+  --sl-color-accent-high: #d6ccff;
+}
+:root[data-theme='light'] {
+  --sl-color-accent-low: #e4ddff;
+  --sl-color-accent: #5b3fd9;
+  --sl-color-accent-high: #3a26a6;
+}
+
+/* Syntax in a table cell reads as one token: `![[Note#Heading]]`, not `!` then the rest. */
+.sl-markdown-content td code {
+  white-space: nowrap;
+}
