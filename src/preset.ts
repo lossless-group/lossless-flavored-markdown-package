@@ -27,6 +27,7 @@ import { lfmImageCarousel } from './plugins/lfm-image-carousel.js';
 import { lfmHeadingBlocks } from './plugins/lfm-heading-blocks.js';
 import { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
 import { remarkLfmMdx } from './plugins/remark-lfm-mdx.js';
+import { lfmWordColons } from './plugins/lfm-word-colons.js';
 import type { RemarkLfmOptions } from './types/index.js';
 import type { Root } from 'mdast';
 import type { Plugin } from 'unified';
@@ -66,6 +67,8 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
 
   if (opts.directives) {
     processor.use(remarkDirective as Plugin);
+    // `re:Invent` is a word, not a `:Invent` directive.
+    processor.use(lfmWordColons);
   }
 
   // MDX: opt-in, for .mdx files only, since it changes how `<` and `{` parse.
