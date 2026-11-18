@@ -1,0 +1,31 @@
+---
+/**
+ * TableOfContents__List — the recursive <ul> for TableOfContents.astro.
+ *
+ * An *element* of the block, not a variant, so it takes `__` rather than `--`
+ * per the house component grammar (cf. Section__ProjectGallery,
+ * JumboPopdown__More). Split out only because Astro has no inline component
+ * declarations and the outline nests to arbitrary depth.
+ */
+import type { LfmHeadingNode } from '../../../../src/types/index.ts';
+
+interface Props {
+  nodes: LfmHeadingNode[];
+  level?: number;
+}
+
+const { nodes, level = 0 } = Astro.props;
+---
+
+<ul class="lfm-toc__list" data-level={level}>
+  {nodes.map((node) => (
+    <li class="lfm-toc__item">
+      <a class="lfm-toc__link" href={`#${node.id}`} data-toc-link>
+        {node.text}
+      </a>
+      {node.children.length > 0 && (
+        <Astro.self nodes={node.children} level={level + 1} />
+      )}
+    </li>
+  ))}
+</ul>

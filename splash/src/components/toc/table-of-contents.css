@@ -1,0 +1,320 @@
+/**
+ * table-of-contents.css — block, element, and the three viewport states.
+ *
+ * State is expressed as media queries plus `[data-open]`, never as a modifier
+ * class, because the states are viewport-driven rather than author-chosen.
+ * See the spec's naming section for why this component doesn't take `--`
+ * modifier siblings the way ImageCarousel does.
+ *
+ * Breakpoints
+ *   ≥ 1280px   Rail       persistent left column
+ *   768–1279   Collapsed  hamburger, expands right as an overlay
+ *   < 768px    Header     top bar, expands downward
+ *
+ * The Rail threshold is set where the 3xl article column plus a 15rem rail
+ * stops fitting comfortably — i.e. roughly a laptop window sharing a screen.
+ */
+
+.lfm-toc {
+  --lfm-toc-w: 15rem;
+  --lfm-toc-fg: var(--color-text-dim, #888);
+  --lfm-toc-fg-active: var(--color-accent, #3b82f6);
+  --lfm-toc-bg: var(--color-bg-elevated, rgba(127, 127, 127, 0.06));
+  --lfm-toc-border: var(--color-border, rgba(127, 127, 127, 0.24));
+  --lfm-toc-radius: 0.5rem;
+  /* Ranked deliberately against the site's existing stack: the sticky
+     .site-header is z-index 50 and its dropdowns are 60. The ToC sits BELOW
+     both and clears the header vertically instead of competing with it. */
+  --lfm-toc-z: 40;
+  /* JS publishes --lfm-toc-header-bottom (the measured header edge) on :root;
+     this is the breathing room added on top of it, per state. */
+  --lfm-toc-gap: 0.75rem;
+
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* ── Panel: shared by all three states ─────────────────────────────────── */
+.lfm-toc__panel {
+  background: var(--lfm-toc-bg);
+  border: 1px solid var(--lfm-toc-border);
+  border-radius: var(--lfm-toc-radius);
+  padding: 1rem;
+}
+
+.lfm-toc__title {
+  margin: 0 0 0.625rem;
+  font-family: var(--font__mono, monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lfm-toc-fg);
+}
+
+/* Scoped under the block so the prose reset (.docs-prose ol/ul/li/a) can't
+   reach in. Same lesson as the carousel dot nav: class+element (0,1,1) beats a
+   lone class, so every list rule here carries the block for (0,2,0). */
+.lfm-toc .lfm-toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lfm-toc .lfm-toc__list[data-level='1'] {
+  margin-left: 0.75rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--lfm-toc-border);
+}
+
+.lfm-toc .lfm-toc__item {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lfm-toc .lfm-toc__item::marker {
+  content: '';
+}
+
+.lfm-toc .lfm-toc__link {
+  display: block;
+  padding: 0.4rem 0;
+  color: var(--lfm-toc-fg);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.lfm-toc .lfm-toc__link:hover {
+  color: var(--lfm-toc-fg-active);
+  text-decoration: none;
+}
+
+.lfm-toc .lfm-toc__link[data-active] {
+  color: var(--lfm-toc-fg-active);
+  border-left-color: var(--lfm-toc-fg-active);
+  font-weight: 600;
+}
+
+/* ── Affordances ───────────────────────────────────────────────────────── */
+.lfm-toc__bar,
+.lfm-toc__burger {
+  display: none;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  background: var(--lfm-toc-bg);
+  border: 1px solid var(--lfm-toc-border);
+}
+
+.lfm-toc__bar {
+  width: 100%;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--lfm-toc-radius);
+  text-align: left;
+}
+
+.lfm-toc__bar-kicker {
+  font-family: var(--font__mono, monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lfm-toc-fg);
+  flex: 0 0 auto;
+}
+
+.lfm-toc__bar-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.lfm-toc__chevron {
+  flex: 0 0 auto;
+  transition: transform 0.15s ease;
+}
+
+.lfm-toc[data-open] .lfm-toc__chevron {
+  transform: rotate(180deg);
+}
+
+/* The burger floats over body text at these widths — there is no gutter to
+   hide in once the container fills the viewport — so it has to announce
+   itself. Accent border + accent glow, both riding the mode tokens the same
+   way callouts do: near-invisible wash in light, full blast in vibrant. */
+.lfm-toc__burger {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--lfm-toc-radius);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--lfm-toc-fg-active);
+  border-color: color-mix(in srgb, var(--lfm-toc-fg-active) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0) * 60%),
+    var(--color-bg-elevated, rgba(20, 20, 24, 0.9))
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lfm-toc-fg-active) 35%, transparent),
+    0 0 var(--fx-glow-spread, 12px) calc(var(--fx-glow-spread, 12px) / -6)
+      color-mix(in srgb, var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0.2) * 200%), transparent),
+    0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.lfm-toc__burger:hover,
+.lfm-toc__burger[aria-expanded='true'] {
+  border-color: var(--lfm-toc-fg-active);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px var(--lfm-toc-fg-active),
+    0 0 calc(var(--fx-glow-spread, 12px) * 1.4) 0
+      color-mix(in srgb, var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0.2) * 260%), transparent),
+    0 6px 18px rgba(0, 0, 0, 0.36);
+}
+
+.lfm-toc__burger span {
+  display: block;
+  width: 1.125rem;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+/* ── State: Rail (≥1280px) ─────────────────────────────────────────────── */
+@media (min-width: 1280px) {
+  .lfm-toc {
+    width: var(--lfm-toc-w);
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .lfm-toc__panel {
+    display: block;
+  }
+}
+
+/* ── State: Collapsed (768–1279px) ─────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1279.98px) {
+  .lfm-toc {
+    position: fixed;
+    top: calc(var(--lfm-toc-header-bottom, 3.25rem) + var(--lfm-toc-gap));
+    left: 1rem;
+    z-index: var(--lfm-toc-z);
+    width: max-content;
+  }
+  .lfm-toc__burger {
+    display: flex;
+    backdrop-filter: blur(6px);
+  }
+  /* Expands rightward as an overlay. Deliberately does NOT push the article —
+     reflowing body text mid-read is disorienting, and the reader opened this
+     to leave, not to re-read a re-laid-out paragraph. */
+  .lfm-toc__panel {
+    display: none;
+    position: absolute;
+    top: 3.25rem;
+    left: 0;
+    width: max-content;
+    min-width: 16rem;
+    max-width: 22rem;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .lfm-toc[data-open] .lfm-toc__panel {
+    /* Matches the burger: accent border + mode-scaled glow, because this also
+       floats over body text and needs to read as a surface, not a smudge. */
+    border-color: color-mix(in srgb, var(--lfm-toc-fg-active) 55%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0) * 40%),
+      var(--color-bg-elevated, rgba(20, 20, 24, 0.96))
+    );
+    backdrop-filter: blur(10px);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--lfm-toc-fg-active) 30%, transparent),
+      0 0 var(--fx-glow-spread, 12px) calc(var(--fx-glow-spread, 12px) / -6)
+        color-mix(in srgb, var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0.2) * 180%), transparent),
+      0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  .lfm-toc[data-open] .lfm-toc__panel {
+    display: block;
+  }
+}
+
+/* ── State: Header (<768px) ────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .lfm-toc {
+    /* Tucked close — the bar reads as an extension of the header rather than
+       a separate floating thing. */
+    --lfm-toc-gap: 0.25rem;
+    position: fixed;
+    top: calc(var(--lfm-toc-header-bottom, 3.25rem) + var(--lfm-toc-gap));
+    left: 0;
+    right: 0;
+    z-index: var(--lfm-toc-z);
+    padding: 0 0.75rem;
+    font-size: 0.95rem;
+  }
+  .lfm-toc .lfm-toc__link {
+    padding: 0.55rem 0 0.55rem 0.5rem;
+  }
+  .lfm-toc__panel {
+    padding: 0.85rem 1rem;
+  }
+  .lfm-toc__bar {
+    display: flex;
+    border-color: color-mix(in srgb, var(--lfm-toc-fg-active) 55%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow:
+      0 0 var(--fx-glow-spread, 12px) calc(var(--fx-glow-spread, 12px) / -6)
+        color-mix(in srgb, var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0.2) * 160%), transparent),
+      0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+  .lfm-toc__panel {
+    display: none;
+    margin-top: 0.375rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .lfm-toc[data-open] .lfm-toc__panel {
+    border-color: color-mix(in srgb, var(--lfm-toc-fg-active) 55%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0) * 40%),
+      var(--color-bg-elevated, rgba(20, 20, 24, 0.96))
+    );
+    backdrop-filter: blur(10px);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--lfm-toc-fg-active) 30%, transparent),
+      0 0 var(--fx-glow-spread, 12px) calc(var(--fx-glow-spread, 12px) / -6)
+        color-mix(in srgb, var(--lfm-toc-fg-active) calc(var(--fx-glow-opacity, 0.2) * 180%), transparent),
+      0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  .lfm-toc[data-open] .lfm-toc__panel {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lfm-toc .lfm-toc__link,
+  .lfm-toc__chevron,
+  .lfm-toc__burger {
+    transition: none;
+  }
+  .lfm-toc__burger:hover,
+  .lfm-toc__burger[aria-expanded='true'] {
+    transform: none;
+  }
+}

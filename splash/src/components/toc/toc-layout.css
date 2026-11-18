@@ -1,0 +1,37 @@
+/* Long-form page layout with the table of contents. Below 1280px the column is
+   the usual centered .container-narrow and the ToC handles itself (a menu on
+   laptops, a bar naming the current section on phones). At 1280px and up the
+   ToC becomes a left rail, and the layout takes the header's full container
+   width so the rail lines up with the brand mark.
+   `overflow-x: clip`, not `hidden`, so the sticky rail still works. */
+.entry__layout {
+  overflow-x: clip;
+}
+.toc-aside {
+  align-self: start;
+}
+@media (min-width: 1280px) {
+  .entry__layout {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 760px);
+    gap: clamp(3rem, 5vw, 5rem);
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+  }
+  .entry__layout > .entry__column {
+    margin: 0;
+    padding: 0;
+  }
+  .toc-aside {
+    position: sticky;
+    top: calc(var(--lfm-toc-header-bottom, 4rem) + 2rem);
+  }
+}
+/* Below the rail breakpoint the ToC is a bar (phones) or a button (laptops)
+   pinned under the header; leave room so it doesn't cover the back link. */
+@media (max-width: 1279px) {
+  .entry__layout:has(.toc-aside [data-toc]) {
+    padding-top: 3.5rem;
+  }
+}

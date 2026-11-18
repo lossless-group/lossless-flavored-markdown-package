@@ -1,0 +1,95 @@
+---
+/**
+ * TableOfContents — reading-position ToC for LFM-rendered articles.
+ *
+ * Renders from `tree.data.headings` (LFM ≥0.4.0 `remarkHeadingIds`). Does not
+ * scrape the DOM and does not compute slugs — anchor identity belongs to the
+ * package, per lfm/context-v/Maintain-Heading-Anchors-and-Share-Links.md.
+ *
+ * THREE STATES, ONE RENDER. Deliberately *not* split into
+ * `TableOfContents--{Variant}.astro` siblings: the states are viewport-driven,
+ * not author-chosen. All three exist in this markup simultaneously and CSS
+ * decides which is visible. Modifier siblings are for variants an author picks
+ * (cf. ImageCarousel--Peek).
+ *
+ *   Rail       wide desktop     persistent left column
+ *   Collapsed  laptop / narrow  hamburger; expands right as an overlay
+ *   Header     mobile           top bar naming the current heading; expands down
+ *
+ * Spec: astro-knots/context-v/specs/Reading-Position-Table-of-Contents-for-LFM-Articles.md
+ */
+import TocList from './TableOfContents__List.astro';
+import { nestHeadings, filterHeadings } from '../../../../src/plugins/remark-lfm-heading-ids.ts';
+import type { LfmHeading } from '../../../../src/types/index.ts';
+import './table-of-contents.css';
+
+interface Props {
+  /** `tree.data.headings` from parseMarkdown / createLfmProcessor. */
+  headings?: LfmHeading[];
+  /** Shallowest heading level to include. */
+  minDepth?: number;
+  /** Deepest heading level to include. */
+  maxDepth?: number;
+  /** Below this many entries the ToC renders nothing — a 2-item outline is noise. */
+  minEntries?: number;
+  /**
+   * Container names whose headings stay out of the outline. A `###` inside a
+   * callout deserves an anchor but is an aside, not a waypoint; a `:::details`
+   * heading is genuinely navigable. Per-container rather than a boolean,
+   * because that distinction is real — see LfmHeading.inContainer.
+   */
+  excludeContainers?: string[];
+  title?: string;
+}
+
+const {
+  headings = [],
+  minDepth = 2,
+  maxDepth = 3,
+  minEntries = 3,
+  title = 'On this page',
+  excludeContainers = ['callout', 'image-carousel', 'blockquote'],
+} = Astro.props;
+
+// filterHeadings handles `synthetic` and the depth band. Container exclusion is
+// deliberately left to the consumer by the package, so it happens here.
+const filtered = filterHeadings(headings, minDepth, maxDepth).filter(
+  (h) => !h.inContainer || !excludeContainers.includes(h.inContainer)
+);
+const tree = nestHeadings(filtered);
+const enough = filtered.length >= minEntries;
+---
+
+{enough && (
+  <nav class="lfm-toc" data-toc aria-label={title}>
+    {/* Mobile bar. Its label names the heading currently being read — the
+        client script fills it; this fallback covers the no-JS case. */}
+    <button type="button" class="lfm-toc__bar" data-toc-toggle aria-expanded="false">
+      <span class="lfm-toc__bar-kicker">{title}</span>
+      <span class="lfm-toc__bar-label" data-toc-label>{filtered[0]?.text}</span>
+      <span class="lfm-toc__chevron" aria-hidden="true">▾</span>
+    </button>
+
+    {/* Laptop hamburger — same panel, different affordance. */}
+    <button
+      type="button"
+      class="lfm-toc__burger"
+      data-toc-toggle
+      aria-expanded="false"
+      aria-label={title}
+    >
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </button>
+
+    <div class="lfm-toc__panel" data-toc-panel>
+      <p class="lfm-toc__title">{title}</p>
+      <TocList nodes={tree} />
+    </div>
+  </nav>
+)}
+
+<script>
+  import './table-of-contents.client';
+</script>
