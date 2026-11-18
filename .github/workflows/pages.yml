@@ -73,6 +73,9 @@ jobs:
       - name: Build user docs
         working-directory: user-docs
         run: pnpm build
+        env:
+          # Same OpenPanel client as the splash: same origin.
+          OPENPANEL_CLIENT_ID: ${{ vars.OPENPANEL_CLIENT_ID }}
 
       - name: Publish user docs under /docs/
         run: rm -rf dist/docs && cp -R ../user-docs/dist dist/docs

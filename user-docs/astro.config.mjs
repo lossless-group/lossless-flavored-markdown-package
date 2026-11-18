@@ -9,6 +9,21 @@ import { remarkDocsLinks } from './src/remark-docs-links.mjs';
 // workflow builds both and puts this dist/ at splash's dist/docs/.
 const base = '/lossless-flavored-markdown-package/docs/';
 
+// OpenPanel, production builds only, and only when the build has a client ID.
+// The docs share the splash's client (same origin, lossless-group.github.io):
+// the Pages workflow passes vars.OPENPANEL_CLIENT_ID to both builds.
+const openPanelClientId = process.env.OPENPANEL_CLIENT_ID;
+const analytics =
+  process.env.NODE_ENV === 'production' && openPanelClientId
+    ? [
+        {
+          tag: 'script',
+          content: `window.op=window.op||function(){var n=[];return new Proxy(function(){arguments.length&&n.push([].slice.call(arguments))},{get:function(t,r){return"q"===r?n:function(){n.push([r].concat([].slice.call(arguments)))}},has:function(t,r){return"q"===r}})}();window.op('init',{clientId:${JSON.stringify(openPanelClientId)},trackScreenViews:true,trackOutgoingLinks:true,trackAttributes:true});`,
+        },
+        { tag: 'script', attrs: { src: 'https://openpanel.dev/op1.js', defer: true, async: true } },
+      ]
+    : [];
+
 export default defineConfig({
   site: 'https://lossless-group.github.io',
   base,
@@ -24,6 +39,7 @@ export default defineConfig({
         { icon: 'github', label: 'GitHub', href: 'https://github.com/lossless-group/lossless-flavored-markdown-package' },
       ],
       customCss: ['./src/styles/custom.css'],
+      head: analytics,
       sidebar: [
         { label: 'Getting started', link: '/' },
         {
