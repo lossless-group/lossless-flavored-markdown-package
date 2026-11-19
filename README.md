@@ -66,6 +66,7 @@ Every plugin is also exported on its own, for example `remarkLfmCallouts`.
 | Task metadata | `- [ ] @handle Title #Tag ~3d 2026-11-15` | Set `taskMetadata` | [Tasks](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/tasks.md) |
 | A section of another document, shown here | `![[Note#Heading]]` on its own line | Set `crossReferenceEmbeds` with a `load` function | [Cross-reference embeds](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/cross-reference-embeds.md) |
 | Components in `.mdx` files | `import X from './X.astro'` and `<X prop={[…]} />` | Set `mdx` for `.mdx` files | [MDX](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/mdx.md) |
+| A citation of an agent skill, or a pack of them as cards | `:skill[slug]` and `:::skill-pack` | Suggested component: parsed already; your site keeps the registry and renders it | [Agent skills](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/agent-skills.md) |
 
 A bare URL on its own line can also become an embed. The provider catalog ships now, but sites classify the URLs themselves until the plugin lands. See [Link previews](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/link-previews.md).
 

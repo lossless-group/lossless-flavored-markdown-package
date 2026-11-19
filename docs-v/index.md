@@ -6,6 +6,7 @@ okf_version: "0.2"
 
 `docs-v/` is this repo's documentation folder: `docs-v` means docs.
 
+* [Agent skills](agent-skills.md) - Cite a skill inline or show a pack of them as cards (a suggested component)
 * [Citations](citations.md) - Hex-code footnotes and the citation dataset
 * [Code-fence formats](code-fences.md) - Mermaid, Graphviz, PlantUML, Vega-Lite, YANG, JSON Schema, JSON Canvas
 * [Cross-reference embeds](cross-reference-embeds.md) - Obsidian's `![[Note#Heading]]`: a section of another document, shown here

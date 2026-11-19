@@ -55,6 +55,7 @@ export default defineConfig({
             'code-fences',
             'highlighting',
             'tasks',
+            'agent-skills',
           ],
         },
         { label: 'Reference', items: ['types', 'roadmap'] },
