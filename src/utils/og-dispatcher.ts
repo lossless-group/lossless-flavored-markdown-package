@@ -154,6 +154,7 @@ export class OGDispatcher {
   private readonly limiter: RateLimiter;
   private readonly cache: OGCache;
 
+  /** Prefer `createOGDispatcher(opts)`, which loads the cache for you. */
   constructor(opts: OGFetchOptions, cache: OGCache) {
     this.opts = {
       ...DEFAULTS,

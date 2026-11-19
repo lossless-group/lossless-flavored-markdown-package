@@ -210,8 +210,11 @@ export interface LfmCrossReferenceEmbedOptions {
 
 /** Stamped on the embed node as `data.crossReferenceEmbed`. */
 export interface LfmCrossReferenceEmbedData {
+  /** The document named in the embed, as written. */
   path: string;
+  /** The headings after `#`, joined with ` › ` for a subsection, or `null` for the whole document. */
   section: string | null;
+  /** The label after `|`, or `null` when there is none. */
   display: string | null;
   /** For the "from …" line. */
   title: string;
@@ -219,6 +222,7 @@ export interface LfmCrossReferenceEmbedData {
   url?: string;
   /** `ok`, or why the block is empty. */
   status: 'ok' | 'missing-document' | 'missing-section' | 'too-deep';
+  /** The embed exactly as written, e.g. `![[Note#Heading]]`. */
   raw: string;
 }
 
@@ -284,6 +288,7 @@ export type LfmTaskGroupBy = 'section' | 'assignee' | 'tag' | 'source';
 export interface LfmTaskGroup<T extends LfmTask = LfmTask> {
   /** The group's name, or `null` for tasks with nothing to group on. */
   key: string | null;
+  /** The group's tasks, in document order. */
   tasks: T[];
 }
 
@@ -511,6 +516,7 @@ export interface LinkPreviewData {
   type: 'article' | 'video' | 'audio' | 'code' | 'tweet' | 'unknown';
 
   // === Surface metadata (extracted at build time from OG / twitter / Schema.org tags) ===
+  /** Aligns with the canonical `title` field. */
   title?: string;
   /** Aligns with the canonical `lede` field (subtitle is canonical-only for now). */
   description?: string;
@@ -538,6 +544,7 @@ export interface LinkPreviewData {
   providerExtra?: Record<string, string>;
 
   // === Bridge to canonical Sources catalog (set iff promoted) ===
+  /** Set when this URL has been promoted to an entry in the canonical Sources catalog. */
   canonicalSource?: {
     /** `internal_uuid` from the canonical schema. */
     uuid: string;

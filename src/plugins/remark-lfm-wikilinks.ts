@@ -127,6 +127,10 @@ function selectResolver(
   return null;
 }
 
+/**
+ * Remark plugin that turns `[[wikilinks]]` into `link` nodes, using the site's
+ * `resolver` or `paths` config. Unresolved wikilinks become plain text.
+ */
 export const remarkLfmWikilinks: Plugin<[WikilinkOptions], Root> = function (options) {
   const selected = selectResolver(options);
   if (!selected) {

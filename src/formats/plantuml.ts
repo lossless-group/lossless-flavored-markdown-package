@@ -1,4 +1,6 @@
 /**
+ * @module
+ *
  * PlantUML fence format — the actual UML answer.
  *
  * PlantUML covers the full UML surface (class, sequence, activity, component,
@@ -73,16 +75,19 @@ export function encodePlantUml(source: string): string {
   return encode64(new Uint8Array(deflated));
 }
 
+/** Options for the `plantuml` fence format. */
 export interface PlantUmlOptions {
   /** Server base, no trailing slash. Default: the public plantuml.com instance. */
   server?: string;
 }
 
+/** Everything a renderer needs for one `plantuml` fence. */
 export interface PlantUmlFenceResult {
   /** The encoded path segment. */
   encoded: string;
-  /** Ready-to-use image URLs. */
+  /** Ready-to-use SVG image URL. */
   svg: string;
+  /** Ready-to-use PNG image URL. */
   png: string;
   /** Editable-on-the-server link, handy in docs. */
   editor: string;

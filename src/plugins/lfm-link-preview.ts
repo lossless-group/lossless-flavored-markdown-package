@@ -45,6 +45,10 @@ export type LinkPreviewFormat =
   | 'livesite'
   | 'fullplayer';
 
+/**
+ * Layouts for a `:::link-rollup`, which shows several links together.
+ * Mirrors the `--{Format}` segment in `LinkRollup__*` component filenames.
+ */
 export type LinkRollupFormat =
   | 'column'
   | 'gallery'
@@ -124,6 +128,11 @@ function readAside(raw: string | undefined): LinkPreviewSpec['aside'] {
   return undefined;
 }
 
+/**
+ * Remark plugin that stamps `:::link-preview` and `:::link-rollup` directives
+ * with `data.linkPreviewSpec`, and each link inside them with
+ * `data.linkClassification`. Fetches nothing and renders nothing.
+ */
 export const lfmLinkPreview: Plugin<[], Root> = function () {
   return (tree: Root) => {
     visit(tree as any);

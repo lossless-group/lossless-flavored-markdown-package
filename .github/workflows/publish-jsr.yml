@@ -1,0 +1,44 @@
+name: Publish to JSR
+
+# Publishing from Actions is what gives JSR packages provenance: JSR verifies
+# the GitHub OIDC token and links each version to the commit and workflow run
+# that built it. Needs the repo linked in the package's settings on jsr.io.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Same script as `pnpm lfm:jsr`: swaps in the README with the docs-v
+      # guides appended, then runs `deno publish`, which picks up the OIDC token.
+      - name: Publish
+        run: bash scripts/publish-jsr.sh

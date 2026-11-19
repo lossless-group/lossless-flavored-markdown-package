@@ -1,4 +1,6 @@
 /**
+ * @module
+ *
  * resolve-path — a general vault-path → site-route resolver.
  *
  * ## What this is, and what it deliberately is not
@@ -169,6 +171,7 @@ export interface PathRoute {
 export interface PathDiagnostic {
   /** The path as written. */
   input: string;
+  /** Why the path didn't resolve cleanly. */
   reason:
     | 'ambiguous'      // matched several vault files — refused to guess
     | 'not-in-index'   // an index exists and does not contain this

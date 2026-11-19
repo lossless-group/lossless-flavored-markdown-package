@@ -60,6 +60,10 @@ function collectExternalLinks(node: any, sink: Link[]): void {
   }
 }
 
+/**
+ * Remark plugin that fetches Open Graph metadata for every external link and
+ * attaches it as `data.linkPreview`. Does nothing unless `enabled: true`.
+ */
 export const lfmOgFetcher: Plugin<[OGFetchOptions?], Root> = function (options) {
   const opts: OGFetchOptions = { enabled: false, ...(options ?? {}) };
 

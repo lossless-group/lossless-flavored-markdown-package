@@ -1,4 +1,6 @@
 /**
+ * @module
+ *
  * Zero-dependency fence handlers.
  *
  * Every handler here is either pure data or a parse function built on JS
@@ -33,7 +35,9 @@ export const mermaid: FenceFormat<never> = {
 
 /** Parsed JSON Canvas — https://jsoncanvas.org (an open spec, JSON on disk). */
 export interface JsonCanvasDoc {
+  /** Cards on the canvas: text, file, link, or group. Empty when absent. */
   nodes: Array<Record<string, unknown>>;
+  /** Connections between nodes. Empty when absent. */
   edges: Array<Record<string, unknown>>;
 }
 
@@ -78,6 +82,7 @@ export interface VegaLiteSummary {
   channels: string[];
   /** Inline row count, or a named/remote data source. */
   data?: string;
+  /** The spec's `title`, when it's a plain string. */
   title?: string;
 }
 

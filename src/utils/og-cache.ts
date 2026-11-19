@@ -67,6 +67,7 @@ export class OGCache {
   private entries: Record<string, OGCacheEntry>;
   private dirty = false;
 
+  /** Prefer `loadOGCache(path)`, which reads the file for you. */
   constructor(
     private readonly cachePath: string,
     initial: OGCacheFile,

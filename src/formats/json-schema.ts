@@ -1,4 +1,6 @@
 /**
+ * @module
+ *
  * JSON Schema fence format — renders a schema as a tree, the same way YANG
  * renders as an RFC 8340 diagram.
  *
@@ -21,6 +23,7 @@ import type { FenceFormat } from '../types/index.js';
 
 /** A node in the rendered schema tree. */
 export interface SchemaTreeNode {
+  /** Property name, or `oneOf[0]`-style label for a composition branch. */
   name: string;
   /** Rendered type: `string`, `integer | null`, `array<object>`, `oneOf`… */
   type: string;
@@ -30,18 +33,23 @@ export interface SchemaTreeNode {
   enumValues?: string;
   /** Description, first line only. */
   description?: string;
+  /** Nested properties, item shapes, or composition branches. */
   children: SchemaTreeNode[];
 }
 
+/** A whole schema as a tree: its title and type, and the properties under it. */
 export interface SchemaDoc {
+  /** `title`, else the last segment of `$id`, else `(untitled)`. */
   title: string;
   /** `$schema` dialect URI, when declared. */
   dialect?: string;
   /** Root type. */
   type: string;
+  /** Top-level properties. */
   children: SchemaTreeNode[];
 }
 
+/** A parsed JSON Schema object, or any node inside one. */
 type Json = Record<string, any>;
 
 /** Render a schema's type as a short string. */
@@ -72,6 +80,10 @@ function firstLine(s: unknown): string | undefined {
   return line.length ? line : undefined;
 }
 
+/**
+ * Build the tree model from a parsed schema. Local `$ref`s into `definitions`
+ * or `$defs` are followed, stopping at any schema that references itself.
+ */
 export function buildSchemaTree(root: Json): SchemaDoc {
   // Both drafts' definition containers, so either spelling resolves.
   const defs: Json = { ...(root.definitions ?? {}), ...(root.$defs ?? {}) };
@@ -170,12 +182,15 @@ export function renderSchemaTree(doc: SchemaDoc): string {
   return lines.join('\n');
 }
 
+/** Everything a renderer needs for one `json-schema` fence. */
 export interface JsonSchemaFenceResult {
+  /** The tree model, for renderers that draw their own. */
   doc: SchemaDoc;
   /** Ready-to-display tree. */
   tree: string;
 }
 
+/** Parse a JSON Schema fence body into its tree model and ASCII diagram. */
 export function parseJsonSchema(src: string): JsonSchemaFenceResult {
   const raw = JSON.parse(src);
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {

@@ -1,4 +1,6 @@
 /**
+ * @module
+ *
  * YANG fence format — parses RFC 7950 modules and renders the RFC 8340
  * "tree diagram" that is YANG's canonical visual form.
  *
@@ -28,8 +30,11 @@ import type { FenceFormat } from '../types/index.js';
 
 /** A raw YANG statement: keyword, optional argument, optional substatements. */
 export interface YangStatement {
+  /** `container`, `leaf`, `type`… or a `prefix:extension`. */
   keyword: string;
+  /** The statement's argument, quotes removed and concatenations joined. */
   argument?: string;
+  /** Substatements from the `{ … }` block, if any. */
   children: YangStatement[];
 }
 
@@ -143,6 +148,7 @@ export function parseYangStatements(src: string): YangStatement[] {
 
 /** A node in the rendered tree diagram. */
 export interface YangTreeNode {
+  /** The node's identifier. */
   name: string;
   /** container | list | leaf | leaf-list | choice | case | rpc | notification | uses */
   kind: string;
@@ -154,16 +160,23 @@ export interface YangTreeNode {
   marker?: string;
   /** List keys, rendered as `[a b]`. */
   keys?: string;
+  /** Child data nodes. */
   children: YangTreeNode[];
 }
 
+/** A parsed YANG module, ready to render as an RFC 8340 tree. */
 export interface YangModule {
   /** `module` or `submodule`. */
   kind: string;
+  /** The module's name. */
   name: string;
+  /** The `namespace` URI, when declared. */
   namespace?: string;
+  /** The `prefix`, when declared. */
   prefix?: string;
+  /** The first `revision` date, which by convention is the latest. */
   revision?: string;
+  /** Top-level data nodes, RPCs and notifications. */
   children: YangTreeNode[];
 }
 
@@ -315,6 +328,7 @@ export function renderYangTree(mod: YangModule): string {
 
 /** Everything a renderer needs for one `yang` fence. */
 export interface YangFenceResult {
+  /** The parsed module, for renderers that draw their own. */
   module: YangModule;
   /** Ready-to-display RFC 8340 diagram. */
   tree: string;

@@ -23,8 +23,10 @@ import type { Plugin } from 'unified';
 
 /** Variants shipped by the standard library. */
 export const CAROUSEL_VARIANTS = ['filmstrip', 'stepper', 'peek', 'contact-sheet'] as const;
+/** One of the standard-library carousel layouts, named by `variant="…"`. */
 export type CarouselVariant = (typeof CAROUSEL_VARIANTS)[number];
 
+/** The variant used when `variant` is missing or unknown. */
 export const DEFAULT_CAROUSEL_VARIANT: CarouselVariant = 'filmstrip';
 
 /**
@@ -38,13 +40,21 @@ export const DEFAULT_CAROUSEL_VARIANT: CarouselVariant = 'filmstrip';
  */
 export const SEQUENCE_VARIANTS: readonly CarouselVariant[] = ['filmstrip', 'stepper', 'peek'];
 
+/**
+ * Slide order: by the timestamp in each filename (oldest or newest first), or
+ * as written.
+ */
 export type CarouselSort = 'chronological' | 'reverse-chronological' | 'authored';
 
+/** One image in a carousel. */
 export interface CarouselSlide {
+  /** Image URL. */
   src: string;
+  /** Alt text; empty string when the author gave none. */
   alt: string;
   /** Short step name, e.g. "Recovery key". */
   label?: string;
+  /** Longer text shown with the slide: `caption="…"`, or a markdown image's title. */
   caption?: string;
   /** Parsed from the filename stamp; `null` when the filename carries none. */
   capturedAt: Date | null;
@@ -52,12 +62,19 @@ export interface CarouselSlide {
   authoredIndex: number;
 }
 
+/** What the plugin attaches to a carousel node as `data.carousel`. */
 export interface CarouselData {
+  /** Layout the renderer should use. */
   variant: CarouselVariant;
+  /** The order `slides` is in. */
   sort: CarouselSort;
+  /** The carousel's `title` attribute. */
   title?: string;
+  /** Show ordinal badges. True unless the author wrote `numbered="false"`. */
   numbered: boolean;
+  /** The `max-height` attribute, as written (a CSS length). */
   maxHeight?: string;
+  /** Slides in display order. */
   slides: CarouselSlide[];
 }
 
