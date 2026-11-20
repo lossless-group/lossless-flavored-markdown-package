@@ -9,6 +9,7 @@ okf_version: "0.2"
 * [Agent skills](agent-skills.md) - Cite a skill inline or show a pack of them as cards (a suggested component)
 * [Citations](citations.md) - Hex-code footnotes and the citation dataset
 * [Code-fence formats](code-fences.md) - Mermaid, Graphviz, PlantUML, Vega-Lite, YANG, JSON Schema, JSON Canvas
+* [Comments](comments.md) - Obsidian's `%%private notes%%`, left out of the page
 * [Cross-reference embeds](cross-reference-embeds.md) - Obsidian's `![[Note#Heading]]`: a section of another document, shown here
 * [Headings](headings.md) - Heading blocks and the table-of-contents outline
 * [Image carousels](images.md) - The carousel directive and payload

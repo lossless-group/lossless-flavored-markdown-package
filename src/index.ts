@@ -104,6 +104,9 @@ export { remarkLfmMdx } from './plugins/remark-lfm-mdx.js';
 // Obsidian section embeds: ![[Note#Heading]] shows that section here
 export { lfmCrossReferenceEmbeds, parseCrossReferenceEmbedTarget } from './plugins/lfm-cross-reference-embeds.js';
 
+// Obsidian comments: %%private notes%% are left out of the page. On by default.
+export { remarkLfmComments } from './plugins/remark-lfm-comments.js';
+
 /** Task aggregator — rolls many documents' tasks into one list, groups them, and
  *  writes Markdown for GitHub. The `lfm-tasks` script runs it over a git repo. */
 export { aggregateTasks, groupTasks, tasksToMarkdown } from './utils/aggregate-tasks.js';

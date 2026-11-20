@@ -130,6 +130,12 @@ export interface RemarkLfmOptions {
    */
   headingBlocks?: boolean;
   /**
+   * Leave Obsidian comments out of the page: `%%…%%` inline, or across several
+   * blocks. Default: true — the notes were written to stay private. Pass
+   * `false` to keep them as text.
+   */
+  comments?: boolean;
+  /**
    * Enable Obsidian wikilink resolution. Disabled by default — wikilink
    * destinations are inherently per-site, so consumers must supply a
    * `resolver` function via `WikilinkOptions`. Omit (or pass `false`) to

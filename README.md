@@ -54,6 +54,7 @@ Every plugin is also exported on its own, for example `remarkLfmCallouts`.
 |---|---|---|---|
 | Tables, task lists, strikethrough, autolinks | GFM | On by default | |
 | Callouts | `> [!warning] Title` or `:::callout{type="warning"}` | On by default | |
+| Private notes, left out of the page | `%%comment%%`, inline or across blocks | On by default | [Comments](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/comments.md) |
 | Citations | `[^a1b2c3]` | On by default | [Citations](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/citations.md) |
 | Heading anchors and a table of contents | Any heading | On by default | [Headings](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/headings.md) |
 | An eyebrow and subheading on a heading | `$$ Eyebrow` and `&& Subheading` | On by default | [Headings](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/headings.md) |
@@ -190,6 +191,7 @@ const tree = await parseMarkdown(content, {
   citations: true,      // default: true
   headingIds: true,     // default: true
   headingBlocks: true,  // default: true
+  comments: true,       // default: true; leaves %%notes%% out of the page
 
   // Opt-in, because each needs something from you:
   // codeFences: { formats: [mermaid] },

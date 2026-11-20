@@ -47,6 +47,7 @@ export default defineConfig({
           items: [
             'headings',
             'citations',
+            'comments',
             'cross-reference-embeds',
             'mdx',
             'wikilinks',

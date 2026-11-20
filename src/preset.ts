@@ -29,6 +29,7 @@ import { lfmTaskMetadata } from './plugins/lfm-task-metadata.js';
 import { remarkLfmMdx } from './plugins/remark-lfm-mdx.js';
 import { lfmWordColons } from './plugins/lfm-word-colons.js';
 import { lfmCrossReferenceEmbeds } from './plugins/lfm-cross-reference-embeds.js';
+import { remarkLfmComments } from './plugins/remark-lfm-comments.js';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import type { RemarkLfmOptions } from './types/index.js';
@@ -59,6 +60,7 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
     citations: true,
     headingIds: true,
     headingBlocks: true,
+    comments: true,
     ...options,
   } satisfies RemarkLfmOptions;
 
@@ -79,6 +81,13 @@ export const remarkLfm: Plugin<[RemarkLfmOptions?], Root> = function (options?: 
   // and plain text, never raw JSX or ESM.
   if (opts.mdx) {
     processor.use(remarkLfmMdx, opts.mdx === true ? undefined : opts.mdx);
+  }
+
+  // Comments: on by default, since a `%%note%%` is written to stay private.
+  // Runs before every other transform, so nothing downstream (embeds, ids, the
+  // outline, citations) ever sees what was commented out.
+  if (opts.comments !== false) {
+    processor.use(remarkLfmComments);
   }
 
   // Embeds: opt-in, since a site has to say how to load another document.

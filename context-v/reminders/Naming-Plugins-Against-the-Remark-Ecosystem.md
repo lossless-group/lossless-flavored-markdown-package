@@ -74,6 +74,7 @@ Recorded so a future agent can pattern-match rather than re-derive. Correct as o
 | `remark-lfm-code-fences` | `remark-code-import`, `remark-flexible-code-titles` | 2 | `remarkLfmCodeFences` |
 | `remark-lfm-heading-ids` | `remark-heading-id`, `remark-custom-header-id` | 2 | `remarkLfmHeadingIds` |
 | `remark-lfm-wikilinks` | `remark-wiki-link` | 2 | `remarkLfmWikilinks` |
+| `remark-lfm-comments` | `remark-comments` (same job, `<--COMMENTS … COMMENTS-->` markers) | 2 | `remarkLfmComments` |
 | `lfm-link-preview` | oEmbed plugins exist, but `:::link-preview` is our trigger | 3 | `lfmLinkPreview` |
 | `lfm-og-fetcher` | none | 3 | `lfmOgFetcher` |
 | `lfm-image-carousel` | none | 3 | `lfmImageCarousel` |
