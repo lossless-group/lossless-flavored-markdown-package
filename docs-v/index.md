@@ -12,6 +12,7 @@ okf_version: "0.2"
 * [Comments](comments.md) - Obsidian's `%%private notes%%`, left out of the page
 * [Cross-reference embeds](cross-reference-embeds.md) - Obsidian's `![[Note#Heading]]`: a section of another document, shown here
 * [Headings](headings.md) - Heading blocks and the table-of-contents outline
+* [In the browser](browser.md) - Import LFM from a CDN and render markdown, citations included, with no build step
 * [Image carousels](images.md) - The carousel directive and payload
 * [Link previews](link-previews.md) - OpenGraph fetching and bare-URL embeds
 * [MDX](mdx.md) - Components in `.mdx` files, resolved from the file's own imports

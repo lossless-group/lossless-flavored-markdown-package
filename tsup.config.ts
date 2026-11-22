@@ -3,6 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     'index': 'src/index.ts',
+    'browser': 'src/browser.ts',
     'parse': 'src/parse.ts',
     'preset': 'src/preset.ts',
     'highlight': 'src/highlight.ts',

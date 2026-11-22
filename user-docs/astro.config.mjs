@@ -59,7 +59,7 @@ export default defineConfig({
             'agent-skills',
           ],
         },
-        { label: 'Reference', items: ['types', 'roadmap'] },
+        { label: 'Reference', items: ['browser', 'types', 'roadmap'] },
         {
           label: 'More',
           items: [
