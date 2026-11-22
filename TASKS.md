@@ -4,11 +4,11 @@
 
 ## Unassigned
 
-- [ ] This is an incomplete task. ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:310](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L310))
-- [ ] Task item 1 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:355](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L355))
-- [ ] Subtask 1 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:356](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L356))
-- [ ] Task item 2 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:357](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L357))
-- [ ] Subtask 1 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:358](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L358))
+- [ ] This is an incomplete task. ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:313](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L313))
+- [ ] Task item 1 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:358](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L358))
+- [ ] Subtask 1 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:359](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L359))
+- [ ] Task item 2 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:360](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L360))
+- [ ] Subtask 1 ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:361](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L361))
 - [ ] Add support for directives in the Obsidian native markdown editor, which requires a different way of handling styles for the custom components and will not be in Astro. ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:892](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L892))
 - [ ] Implement additional directive types following the established patterns (Miro, Notion, etc.) ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:893](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L893))
 - [ ] Add support for directive transformations during build time for better performance ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:894](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L894))
@@ -21,10 +21,10 @@
 <details>
 <summary>Completed (15)</summary>
 
-- [x] This is a completed task. ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:309](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L309))
-- [x] Milk ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:324](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L324))
-- [x] Eggs ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:325](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L325))
-- [x] Eggs ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:326](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L326))
+- [x] This is a completed task. ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:312](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L312))
+- [x] Milk ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:327](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L327))
+- [x] Eggs ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:328](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L328))
+- [x] Eggs ([context-v/explorations/Extended-Obsidian-Extended-Markdown.md:329](context-v/explorations/Extended-Obsidian-Extended-Markdown.md?plain=1#L329))
 - [x] **Install the Lossless Group's `remark-directive` Package:** Install the custom fork directly from the GitHub repository using pnpm. This approach is more practical for most use cases as it treats the fork as a dependency rather than requiring local development setup. ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:73](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L73))
 - [x] **Agree on directive syntax in markdown files** ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:92](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L92))
 - [x] **Agree on conventions for defining directives and mapping to components** ([context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md:118](context-v/specs/Maintain-Directives-in-Extended-Markdown-Render-Pipeline.md?plain=1#L118))

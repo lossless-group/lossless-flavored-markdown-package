@@ -5,7 +5,8 @@ date_authored_final_draft: 2025-03-20
 date_first_published: null
 at_semantic_version: 0.0.0.1
 status: To-Do
-augmented_with: 'Windsurf Cascade on Claude 3.7 Sonnet'
+augmented_with:
+  - 'Windsurf Cascade on Claude 3.7 Sonnet'
 category: Code-Generators
 date_created: 2025-03-19
 date_modified: 2025-04-22
@@ -18,6 +19,8 @@ tags: [Workflow-Management, Client-Updates, Platform-Mechanisms, Workspace-Confi
 authors:
   - Michael Staton
 banner_image: https://ik.imagekit.io/xvpgfijuw/uploads/lossless/reminders/2025-05-05_banner_image_Extended-Obsidian-Extended-Markdown_051a00d1-05e3-48da-ad20-5495341e13d1_QF6RSzqJp.webp
+hex_code: q4r1rq
+type: Explorations
 ---
 [[Tooling/Productivity/Advanced Documents/Obsidian|Obsidian]]
 
