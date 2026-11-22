@@ -11,6 +11,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./browser": {
+      "import": "./dist/browser.js",
+      "types": "./dist/browser.d.ts"
+    },
     "./types": {
       "import": "./dist/types/index.js",
       "types": "./dist/types/index.d.ts"
@@ -41,7 +45,7 @@
     }
   },
   "bin": {
-    "lfm-tasks": "./dist/cli/lfm-tasks.js"
+    "lfm-tasks": "dist/cli/lfm-tasks.js"
   },
   "files": [
     "src",
@@ -55,8 +59,9 @@
     "test": "pnpm build && node --test test/*.test.mjs",
     "test:only": "node --test test/*.test.mjs",
     "lfm:gh": "pnpm build && if npm view \"@lossless-group/lfm@$(node -p \"require('./package.json').version\")\" version --registry=https://npm.pkg.github.com \"--//npm.pkg.github.com/:_authToken=$(gh auth token)\" >/dev/null 2>&1; then echo \"GitHub Packages: version already published, skipping\"; else npm publish --registry=https://npm.pkg.github.com \"--//npm.pkg.github.com/:_authToken=$(gh auth token)\"; fi",
+    "lfm:npm": "bash scripts/publish-npm.sh",
     "lfm:jsr": "bash scripts/publish-jsr.sh",
-    "lfm:publish": "pnpm lfm:gh || true; pnpm lfm:jsr"
+    "lfm:publish": "pnpm lfm:gh || true; status=0; pnpm lfm:npm || status=1; pnpm lfm:jsr || status=1; exit $status"
   },
   "dependencies": {
     "remark-directive": "^3.0.0",
@@ -70,6 +75,9 @@
     "@types/estree": "^1.0.10",
     "@types/mdast": "^4.0.0",
     "@types/node": "^25.6.0",
+    "esbuild": "0.27.7",
+    "rehype-stringify": "^10",
+    "remark-rehype": "^11",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0"
   },
@@ -88,7 +96,7 @@
   "author": "Michael Staton <michael@lossless.group>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lossless-group/lossless-flavored-markdown-package"
+    "url": "git+https://github.com/lossless-group/lossless-flavored-markdown-package.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

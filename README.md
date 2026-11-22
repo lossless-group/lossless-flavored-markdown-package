@@ -48,6 +48,26 @@ const tree = await processor.run(processor.parse(content));
 
 Every plugin is also exported on its own, for example `remarkLfmCallouts`.
 
+## Use in the browser / from a CDN
+
+`@lossless-group/lfm/browser` has the parser, the preset and every plugin, and nothing that needs Node, so a page with no build step (a Claude artifact, a CodePen) can import it from jsDelivr, which mirrors npm. Replace `<version>` with a published version.
+
+```html
+<script type="module">
+  import { unified } from 'https://cdn.jsdelivr.net/npm/unified@11/+esm';
+  import remarkRehype from 'https://cdn.jsdelivr.net/npm/remark-rehype@11/+esm';
+  import rehypeStringify from 'https://cdn.jsdelivr.net/npm/rehype-stringify@10/+esm';
+  import { parseMarkdown } from 'https://cdn.jsdelivr.net/npm/@lossless-group/lfm@<version>/browser/+esm';
+
+  const tree = await parseMarkdown('A claim.[^a3f9b2]\n\n[^a3f9b2]: [A source](https://example.com)');
+  const hast = await unified().use(remarkRehype).run(tree);
+  const html = unified().use(rehypeStringify).stringify(hast);
+  const sources = tree.data.citations.ordered; // [{ index: 1, identifier: 'a3f9b2', title, url }]
+</script>
+```
+
+Open Graph fetching is left out, since it caches to disk. The [browser guide](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/browser.md) covers esm.sh and unpkg, rendering the sources list, and why the two steps stay separate.
+
 ## What you can write
 
 | You want | You write | Setup | Guide |
@@ -208,6 +228,7 @@ const tree = await parseMarkdown(content, {
 | Import | Contains |
 |---|---|
 | `@lossless-group/lfm` | `parseMarkdown`, the `remarkLfm` preset, and every plugin |
+| `@lossless-group/lfm/browser` | The same, minus Open Graph fetching, with no Node imports. [In the browser](https://github.com/lossless-group/lossless-flavored-markdown-package/blob/master/docs-v/browser.md) |
 | `@lossless-group/lfm/formats` | Code-fence handlers, including `mermaid` |
 | `@lossless-group/lfm/formats/yang` | The YANG handler |
 | `@lossless-group/lfm/formats/json-schema` | The JSON Schema handler |

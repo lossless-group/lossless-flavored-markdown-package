@@ -1,0 +1,58 @@
+name: Publish to npm
+
+# Publishes to the public npm registry, which jsDelivr, unpkg and esm.sh
+# mirror. That is what makes `@lossless-group/lfm/browser` importable by URL
+# from a page with no build step. Runs beside publish-jsr.yml on the same tags,
+# as its own workflow so one registry failing doesn't hold up the other.
+#
+# Auth, in the order npm tries it:
+#   1. Trusted publishing (OIDC). Needs a trusted publisher on the package's
+#      settings page on npmjs.com naming this repo and this file,
+#      publish-npm.yml. No secret, and npm adds provenance on its own.
+#   2. The NPM_TOKEN repo secret, an npm granular access token with write
+#      access to @lossless-group/lfm. Needed until (1) is set up, including
+#      for the very first publish if it isn't done by hand.
+# Both need npm 11.5.1 or later, hence the npm upgrade below.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      # Same script as `pnpm lfm:npm`: builds, skips if this version is
+      # already on npm, else publishes with --access public.
+      - name: Publish
+        run: bash scripts/publish-npm.sh --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
