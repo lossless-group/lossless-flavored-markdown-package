@@ -410,6 +410,17 @@ Generated images land at:
 
 `MetaTags.astro` already accepts an `ogImage` prop; per-entry detail pages should pass their entry-specific image when available, falling back to `og-default.png` otherwise.
 
+### Trademark pack
+
+In `public/`, every piece outlined to paths (an `<img>` cannot load web fonts).
+
+| Piece | File |
+|---|---|
+| appIcon | `appIcon__LFM.svg` |
+| favicon | `favicon.svg` (¶ outlined in Newsreader 600) |
+| wordmark | `wordmark__LFM--{Dark,Light}-Mode.svg`: *Lossless Flavored Markdown* in Newsreader 600, -0.02em, with *Flavored* in the mode's accent |
+| trademark | `trademark__LFM--{Dark,Light}-Mode.svg`: appIcon + wordmark |
+
 ## Do's and Don'ts
 
 **Do:**
