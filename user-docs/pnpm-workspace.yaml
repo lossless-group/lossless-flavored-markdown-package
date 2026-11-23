@@ -1,0 +1,10 @@
+# ISOLATION: pnpm stops at the nearest workspace root. Without this file pnpm
+# walks up to the repo root's workspace (packages: ['.']), treats user-docs as
+# outside it, and installs nothing here, so CI fails with "astro: not found".
+# BUILD SCRIPTS: the approvals below live here, so don't pass --ignore-workspace.
+packages:
+  - '.'
+
+allowBuilds:
+  esbuild: true
+  sharp: true
