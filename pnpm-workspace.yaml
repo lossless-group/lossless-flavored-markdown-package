@@ -4,8 +4,8 @@ packages:
 allowBuilds:
   esbuild: true
 
-# tsup 8 still resolves esbuild 0.27.x, which has a dev-server file-read
-# advisory fixed in 0.28.1. Force one patched esbuild for tsup and the tests.
-# pnpm 10+ reads this; CI's pnpm 9 reads the same override from package.json.
+# esbuild 0.27.x has a dev-server file-read advisory fixed in 0.28.1; force one
+# patched esbuild for tsup and the tests.
 overrides:
   esbuild: 0.28.2
+

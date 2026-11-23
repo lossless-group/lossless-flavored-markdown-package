@@ -64,22 +64,22 @@
     "lfm:publish": "pnpm lfm:gh || true; status=0; pnpm lfm:npm || status=1; pnpm lfm:jsr || status=1; exit $status"
   },
   "dependencies": {
-    "remark-directive": "^3.0.0",
-    "remark-gfm": "^4.0.0",
+    "remark-directive": "^4.0.0",
+    "remark-gfm": "^4.0.1",
     "remark-mdx": "^3.1.1",
     "remark-parse": "^11.0.0",
-    "shiki": "~4.5.0",
-    "unified": "^11.0.0"
+    "shiki": "~4.6.0",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@types/estree": "^1.0.10",
-    "@types/mdast": "^4.0.0",
-    "@types/node": "^25.6.0",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^26.6.6",
     "esbuild": "0.28.2",
-    "rehype-stringify": "^10",
-    "remark-rehype": "^11",
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "rehype-stringify": "^10.0.1",
+    "remark-rehype": "^11.1.2",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3"
   },
   "keywords": [
     "markdown",
@@ -101,10 +101,5 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "sideEffects": false,
-  "pnpm": {
-    "overrides": {
-      "esbuild": "0.28.2"
-    }
-  }
+  "sideEffects": false
 }
